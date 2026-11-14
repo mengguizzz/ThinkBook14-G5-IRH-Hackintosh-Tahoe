@@ -53,13 +53,14 @@ EFI 中只保留一份 `OC/config.plist`，它是一份基于已验证配置的�
 
 ## 快速开始
 
-1. 阅读 [EFI 安装与配置](Docs/EFI-SETUP.md)，核对硬件，备份当前引导并准备可启动 U 盘。
-2. 为 EFI 生成自己的 MacBookPro16,2 身份信息，检查 BIOS / DVMT 和驱动依赖。未签名版初次验证需关闭固件 Secure Boot。
-3. 先用 U 盘验证；需要 GPU 系统组件时，使用指定的 WhateverXe Graphics 与 AMFIPass Mod 组合。
-4. 需要恢复 Tahoe 音频/无线系统组件时，按 [根补丁指南](Docs/ROOT-PATCHING.md) 先 inspect，再在满足条件时 apply。不要把当前已打补丁系统重复强行叠补丁。
-5. 需要自己构建 WhateverXe，按 [编译指南](Docs/BUILD.md) 操作。
+1. 阅读 [EFI 安装与配置](Docs/EFI-SETUP.md)，核对硬件，下载镜像，备份当前引导并准备可启动 U 盘。
+2. 为 EFI 生成自己的 MacBookPro16,2 身份信息，检查 BIOS / DVMT 和驱动依赖。
+3. 安装系统，并进入系统完成基础设置，由于一开始没有GPU驱动，系统会很卡，耐心一点。
+4. 先用 U 盘验证；需要 GPU 系统组件时，使用指定的 WhateverXe Graphics 与 AMFIPass Mod 组合，具体操作看下一条。
+5. 需要恢复 Tahoe 音频/无线系统组件时，按 [根补丁指南](Docs/ROOT-PATCHING.md) 先 inspect，再在满足条件时 apply。不要把当前已打补丁系统重复强行叠补丁，实测OCLP无法使用，可能会导致和GPU驱动冲突，发生panic。
+6.（非必须） 如果你需要自己构建 WhateverXe，按 [编译指南](Docs/BUILD.md) 操作，EFI内部已有编译好的，可以直接拿去用。
 
-## 为什么不用最初的 WhateverXe 发行包
+##  WhateverXe 的一些相关说明
 
 成功构建的实际来源为 [jkbuha/WhateverXe-contrib](https://github.com/jkbuha/WhateverXe-contrib) 的 `xps9720-igpu` 分支，基于 [b00t0x/WhateverXe](https://github.com/b00t0x/WhateverXe)。以下“开发分支”指这个社区分支；感谢两者的开发工作。构建所用 Lilu 开发资源另存于 `Source/BuildDependencies`。
 
