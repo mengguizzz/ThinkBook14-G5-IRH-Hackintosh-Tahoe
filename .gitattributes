@@ -1,0 +1,20 @@
+* text=auto eol=lf
+Source/BuildDependencies/** -text -whitespace
+*.efi -text
+*.aml -text
+*.png -text
+*.jpg -text
+*.icns -text
+*.icnspack -text
+*.wav -text
+*.mp3 -text
+*.a -text
+*.zip -text
+EFI/OC/Kexts/**/Contents/MacOS/* -text
+EFI/OC/Kexts/**/_CodeSignature/CodeResources -text
+# Preserve vendor snapshots and signed-bundle resources byte for byte.
+EFI/** -text -whitespace
+Source/WhateverXe/** -text -whitespace
+Source/Diffs/** -text -whitespace
+Patches/RootPatch/source/** -text -whitespace
+Docs/Licenses/** -text -whitespace

@@ -1,0 +1,2283 @@
+diff --git a/README.md b/README.md
+index b6ef321..a89c301 100644
+--- a/README.md
++++ b/README.md
+@@ -23,7 +23,7 @@ Sequoia and Tahoe accept compatible updates within their OS family. Future Apple
+ - Tiger Lake-U: 48- and 80-EU configurations.
+ - Alder Lake-N: 16- and 24-EU configurations.
+ - Twin Lake: 32-EU configurations.
+-- Alder Lake-H: 96-EU configurations, including single-channel operation.
++- Alder Lake-H: 48- and 96-EU configurations, including single-channel operation.
+ - Alder Lake-S: UHD Graphics 770.
+ - Raptor Lake-U: 48-EU configurations.
+ 
+@@ -35,7 +35,7 @@ See [tested features and known issues](#tested-features-and-known-issues) for OS
+ - Other supported Alder Lake-N / Twin Lake configurations.
+ - Other supported Alder Lake-H/P/U and Raptor Lake-H/P/U configurations.
+ - Other supported Alder Lake-S/HX and Raptor Lake-S/HX configurations.
+-- Internal eDP on Alder Lake-N / Twin Lake and Alder Lake-H/P/U / Raptor Lake-H/P/U is implemented but has not been tested on hardware.
++- Internal eDP on Alder Lake-N / Twin Lake and Alder Lake-H/P/U / Raptor Lake-H/P/U is implemented; on hardware it has been tested only with the firmware's panel link kept (`-wex-edp-keep`, see [other settings](#other-settings)).
+ 
+ ### Further implementation required
+ 
+@@ -83,6 +83,7 @@ These settings are unnecessary at 96MB and do not increase firmware-allocated me
+ - Add `SSDT-PNLF` for internal-display brightness control.
+ - GPU selection is automatic; a `device-id` override is normally unnecessary.
+ - Alder Lake-N / Twin Lake and Alder Lake-H/P/U / Raptor Lake-H/P/U select tiling automatically. Do not use `-yTileDisable`; `AAPL,GfxYTile` is unnecessary.
++- If an Alder Lake-H/P/U / Raptor Lake-H/P/U internal panel goes dark when macOS takes over the boot screen, add `-wex-edp-keep` and set OpenCore `UEFI > Output > Resolution` to `Max`. WEX then keeps the panel link the firmware trained instead of training it again; a scaled resolution keeps that link and changes only the pipe scaler. For display sleep also add `-wex-edp-blank`: the panel stays powered and its link keeps running, and only scanning out stops, so the screen shows black (an OLED emits no light). Without it, disable display sleep. With it, system sleep blanks the panel the same way.
+ 
+ ## Tested features and known issues
+ 
+@@ -96,6 +97,7 @@ The common regression checks cover Metal, OpenGL, OpenCL, hardware H.264 encode/
+ | Alder Lake-N / Twin Lake laptops | MicroPC 2 and MiniBook X N100 on Big Sur/Tahoe: MIPI DSI, brightness, rotation, display off/on and HDMI/USB-C coexistence. MicroPC 2: HiDPI and up to three displays; MiniBook X N100: optional 60 Hz |
+ | Raptor Lake-U laptop | MiniBook X U300 on Big Sur/Tahoe: internal MIPI DSI, brightness, rotation, HiDPI and up to two USB-C displays. Internal panel: 50 Hz; optional 60 Hz also tested on Big Sur |
+ | Alder Lake-H | Big Sur–Tahoe: 96 EU, three displays using HDMI and a DP-to-HDMI adapter. Single-channel `4626` graphics acceleration checked on Big Sur |
++| Alder Lake-H laptops | Tahoe: 48 EU, internal 1920x1200 OLED eDP with `-wex-edp-keep`, including scaled resolutions. Display sleep as a black screen with `-wex-edp-blank`; OLED brightness is unsupported |
+ | Alder Lake-S | Big Sur–Tahoe: UHD 770, HDMI/DP/USB-C and up to three displays; Safari video, with Widevine checked on Big Sur/Tahoe |
+ 
+ MIPI DSI support is **experimental**, limited to the tested GPD MicroPC 2 and CHUWI MiniBook X N100/U300 panels. Do not expect it to work on other devices.
+@@ -108,6 +110,7 @@ System sleep/wake support is **experimental**. Tested configurations are MiniBoo
+ - Some image-conversion operations can crash applications.
+ - Safari video may occasionally drop frames. FairPlay-protected playback is unsupported.
+ - Up to three displays are supported. Resolutions beyond the tested configurations remain unverified.
++- With `-wex-edp-keep`, display sleep without `-wex-edp-blank`, or a mode with a different refresh rate or color depth, trains the panel link again and can leave the internal panel dark. System sleep that powers the display hardware off is untested with `-wex-edp-blank`.
+ - Some connector layouts and backlight methods, MST and Thunderbolt-managed outputs are unsupported.
+ 
+ ### Roadmap
+@@ -133,6 +136,6 @@ See [LICENSE.txt](LICENSE.txt). Lilu and MacKernelSDK are separate dependencies.
+ 
+ Thanks to [JulioNectar/XPS13Plus](https://github.com/JulioNectar/Hackintosh-XPS13Plus-IrisXe-Tahoe) for sharing its Xe graphics work. Its compiler adapter and LLVM bridge informed the OS-native AIR conversion used in WhateverXe Graphics.
+ 
+-Internal-panel work also draws on [WhateverXe-RaptorLakeP](https://github.com/samranahmad09/WhateverXe-RaptorLakeP), [X1Carbon-G11](https://github.com/dssoftx/Hackintosh-X1Carbon-G11-IrisXe-Tahoe), XPS13Plus and the [Linux i915 display sources](https://github.com/torvalds/linux/tree/v6.12/drivers/gpu/drm/i915/display) for hardware behavior and implementation comparisons.
++Internal-panel work also draws on [WhateverXe-RaptorLakeP](https://github.com/samranahmad09/WhateverXe-RaptorLakeP), [X1Carbon-G11](https://github.com/dssoftx/Hackintosh-X1Carbon-G11-IrisXe-Tahoe), XPS13Plus and the [Linux i915 display sources](https://github.com/torvalds/linux/tree/v6.12/drivers/gpu/drm/i915/display) for hardware behavior and implementation comparisons. Keeping the firmware's panel link follows [NootedGreen](https://github.com/sgiammori/NootedGreen)'s firmware-link mode and Linux i915 fastboot; `-wex-edp-blank` follows the display-sleep fix of [vikenzo196](https://github.com/vikenzo196/WhateverXe) (issue #53).
+ 
+ The optional MiniBook X 60 Hz panel timing also draws on the [minibookx-ctl display guide](https://github.com/ishad0w/minibookx-ctl/blob/main/docs/guide/display.md).
+diff --git a/README_ja.md b/README_ja.md
+index 6fcad01..be6c3f9 100644
+--- a/README_ja.md
++++ b/README_ja.md
+@@ -23,7 +23,7 @@ SequoiaとTahoeは同じOS系列内の互換性のある更新に対応します
+ - Tiger Lake-U：48 EU・80 EU構成。
+ - Alder Lake-N：16 EU・24 EU構成。
+ - Twin Lake：32 EU構成。
+-- Alder Lake-H：シングルチャネルを含む96 EU構成。
++- Alder Lake-H：シングルチャネルを含む48・96 EU構成。
+ - Alder Lake-S：UHD Graphics 770。
+ - Raptor Lake-U：48 EU構成。
+ 
+@@ -35,7 +35,7 @@ OS別の範囲と表示構成は[動作確認済みの機能と既知の問題](
+ - 対応IDの他のAlder Lake-N / Twin Lake構成。
+ - 対応IDの他のAlder Lake-H/P/U・Raptor Lake-H/P/U構成。
+ - 対応IDの他のAlder Lake-S/HX・Raptor Lake-S/HX構成。
+-- Alder Lake-N / Twin LakeとAlder Lake-H/P/U / Raptor Lake-H/P/Uの内蔵eDPは実装済み・実機未検証です。
++- Alder Lake-N / Twin LakeとAlder Lake-H/P/U / Raptor Lake-H/P/Uの内蔵eDPは実装済みです。実機ではファームウェアのパネルリンクを維持する設定（`-wex-edp-keep`、[その他の設定](#その他の設定)を参照）でのみ確認しています。
+ 
+ ### 対応に追加改修が必要
+ 
+@@ -83,6 +83,7 @@ BIOS/UEFIで設定できる場合は、**DVMT Pre-Allocatedを96MB**にします
+ - 内蔵画面の輝度調整には`SSDT-PNLF`を追加します。
+ - GPUは自動選択するため、通常は`device-id`上書きは不要です。
+ - Alder Lake-N / Twin LakeとAlder Lake-H/P/U / Raptor Lake-H/P/Uではタイル形式を自動選択します。`-yTileDisable`は使わないでください。`AAPL,GfxYTile`は不要です。
++- Alder Lake-H/P/U / Raptor Lake-H/P/Uの内蔵画面がmacOSへの切り替わりで消える場合は、`-wex-edp-keep`を追加し、OpenCoreの`UEFI > Output > Resolution`を`Max`にします。WEXはファームウェアが確立したパネルリンクを再トレーニングせずに維持します。スケーリングした解像度でもリンクを維持し、パイプのスケーラーだけを変更します。ディスプレイのスリープには`-wex-edp-blank`も追加します。パネルとリンクは動作したままで、走査出力だけを止めて黒を表示します（有機ELは発光しません）。追加しない場合はディスプレイのスリープを無効にしてください。追加した場合は、システムのスリープでも同じ方法で画面を黒にします。
+ 
+ ## 動作確認済みの機能と既知の問題
+ 
+@@ -96,6 +97,7 @@ BIOS/UEFIで設定できる場合は、**DVMT Pre-Allocatedを96MB**にします
+ | Alder Lake-N / Twin Lakeラップトップ | Big Sur・Tahoe：MicroPC 2・MiniBook X N100のMIPI DSI・輝度・回転・消灯復帰・HDMI/USB-C共存。MicroPC 2はHiDPI・最大3画面、MiniBook X N100は任意設定の60 Hzも確認 |
+ | Raptor Lake-Uラップトップ | Big Sur・Tahoe：MiniBook X U300の内蔵MIPI DSI・輝度・回転・HiDPI・USB-C外部2画面。内蔵は50 Hz、Big Surでは任意設定の60 Hzも確認 |
+ | Alder Lake-H | Big Sur〜Tahoe：96 EU、HDMIとDP→HDMI変換器による3画面。シングルチャネル構成の`4626`でもBig Surの加速を確認 |
++| Alder Lake-Hラップトップ | Tahoe：48 EU、`-wex-edp-keep`による1920x1200有機ELの内蔵eDP（スケーリングした解像度を含む）。`-wex-edp-blank`で黒画面によるディスプレイのスリープに対応。有機ELの輝度調整は未対応 |
+ | Alder Lake-S | Big Sur〜Tahoe：UHD 770、HDMI/DP/USB-C、最大3画面、Safari動画。WidevineはBig Sur/Tahoeで確認 |
+ 
+ MIPI DSI対応は**試験的**で、検証したGPD MicroPC 2・CHUWI MiniBook X N100/U300の内蔵パネルに限ります。他の機器での動作を期待しないでください。
+@@ -108,6 +110,7 @@ MIPI DSI対応は**試験的**で、検証したGPD MicroPC 2・CHUWI MiniBook X
+ - 一部の画像変換でアプリがクラッシュすることがあります。
+ - Safari動画で時折コマ落ちします。FairPlay保護コンテンツは未対応です。
+ - 同時表示は最大3画面です。検証構成を超える解像度は未検証です。
++- `-wex-edp-keep`では、`-wex-edp-blank`なしのディスプレイのスリープや、リフレッシュレート・色深度の異なるモードではパネルリンクを再トレーニングするため、内蔵画面が消えることがあります。`-wex-edp-blank`で表示ハードウェアの電源が切れるシステムのスリープは未検証です。
+ - 一部の端子配線・輝度制御方式、MST、Thunderbolt管理の出力は未対応です。
+ 
+ ### ロードマップ
+@@ -132,6 +135,6 @@ WhateverXeはWhateverGreenの著作権表示とBSD-3-Clauseライセンスを継
+ 
+ Xeグラフィックスの取り組みを公開している[JulioNectar/XPS13Plus](https://github.com/JulioNectar/Hackintosh-XPS13Plus-IrisXe-Tahoe)に感謝します。同リポジトリのcompiler adapterとLLVM bridgeを、WhateverXe GraphicsのOS標準AIR変換の参考にしました。
+ 
+-内蔵パネルの対応では、[WhateverXe-RaptorLakeP](https://github.com/samranahmad09/WhateverXe-RaptorLakeP)、[X1Carbon-G11](https://github.com/dssoftx/Hackintosh-X1Carbon-G11-IrisXe-Tahoe)、XPS13Plus、[Linux i915の表示ソース](https://github.com/torvalds/linux/tree/v6.12/drivers/gpu/drm/i915/display)も、ハードウェアの挙動と実装の比較に参照しています。
++内蔵パネルの対応では、[WhateverXe-RaptorLakeP](https://github.com/samranahmad09/WhateverXe-RaptorLakeP)、[X1Carbon-G11](https://github.com/dssoftx/Hackintosh-X1Carbon-G11-IrisXe-Tahoe)、XPS13Plus、[Linux i915の表示ソース](https://github.com/torvalds/linux/tree/v6.12/drivers/gpu/drm/i915/display)も、ハードウェアの挙動と実装の比較に参照しています。ファームウェアのパネルリンクの維持は、[NootedGreen](https://github.com/sgiammori/NootedGreen)のファームウェアリンクモードとLinux i915のfastbootに倣っています。`-wex-edp-blank`は、[vikenzo196](https://github.com/vikenzo196/WhateverXe)のディスプレイスリープ修正（issue #53）に倣っています。
+ 
+ MiniBook Xの任意設定60 Hzのパネルタイミングには、[minibookx-ctlの表示ガイド](https://github.com/ishad0w/minibookx-ctl/blob/main/docs/guide/display.md)も参照しています。
+diff --git a/WhateverXe/kern_alderlake_n.hpp b/WhateverXe/kern_alderlake_n.hpp
+index 11c6803..17ca7f2 100644
+--- a/WhateverXe/kern_alderlake_n.hpp
++++ b/WhateverXe/kern_alderlake_n.hpp
+@@ -190,6 +190,30 @@ template<class IO> void readDisplay(IO &io, bool admitted, DisplayReadout &r) {
+         // Display13 DSC/joiner belongs to the corresponding pipe well.
+         add(0x78000 + 0x200 * pipe);add(0x78004 + 0x200 * pipe);
+     }
++    // Display13+ firmware may retain CMTG secondary mode on a single eDP A
++    // source. Observe its control only while the already-captured source,
++    // port clock and buffer remain enabled and unchanged. No CMTG programming
++    // occurs here; downstream admission requires the full source certificate.
++    // Linux intel_cmtg_sanitize requires the supplying port PLL to remain on.
++    if(r.status==ReadoutStatus::Complete && r.activePipes==1 && (r.poweredPipes&1)) {
++        const auto saved=[&](uint32_t offset,uint32_t &out) {
++            for(unsigned i=0;i<r.count;++i)if(r.registers[i].offset==offset) {
++                out=r.registers[i].value;return out!=UINT32_MAX;
++            }
++            return false;
++        };
++        uint32_t trans=0,secondary=0,clock=0,buffer=0;
++        if(saved(0x60400,trans) && saved(0x60404,secondary) &&
++           saved(0x46140,clock) && saved(0x64000,buffer) &&
++           secondary==8 && (trans&0xFF700000U)==0x8A000000U &&
++           (clock>>28)==1 && (buffer&0x80000000U) &&
++           io.read(0x45404)==power && io.read(0x60400)==trans &&
++           io.read(0x46140)==clock && io.read(0x64000)==buffer) {
++            add(0x6FA88); // CMTG A control; unchanged-source adoption NOT implied.
++            if(io.read(0x60400)!=trans || io.read(0x46140)!=clock || io.read(0x64000)!=buffer)
++                r.status=ReadoutStatus::PowerChanged;
++        }
++    }
+     const auto after = add(0x45404);
+     if (r.status == ReadoutStatus::Complete && after != power)
+         r.status = ReadoutStatus::PowerChanged;
+@@ -232,6 +256,13 @@ inline bool dpSource(const DisplayReadout &boot,unsigned pipe,unsigned ddi,const
+        !value(boot,0x78004+pipe*0x200,dss2) || !value(boot,0x60030+bank,dm) ||
+        !value(boot,0x60034+bank,dn) || !value(boot,0x60040+bank,lm) ||
+        !value(boot,0x60044+bank,ln))return false;
++    // Preserve an already-running firmware CMTG secondary only for the
++    // single internal A source. Do not treat bit3 as reserved or clear it.
++    // Linux intel_cmtg_regs.h: ENABLE31, STATE23; other configurations require
++    // a separate contract. Native cache/enable writers preserve CTL2 verbatim.
++    uint32_t cmtg=0;
++    const bool secondary=ctl2==8 && panel && !pipe && !ddi && boot.activePipes==1 &&
++        value(boot,0x6FA88,cmtg) && cmtg==((1U<<31)|(1U<<23));
+     const unsigned lanes=((trans>>1)&7)+1;
+     // Linux v6.12 i915_reg.h: SST, normal training, scrambling, no FEC/MST,
+     // port sync, HDCP, DSC or joined pipes. Enhanced framing may be on or off.
+@@ -240,7 +271,7 @@ inline bool dpSource(const DisplayReadout &boot,unsigned pipe,unsigned ddi,const
+     // preserve it and include it in the unchanged-source check, never clear it
+     // on an enabled transcoder or infer an MST transport from that bit alone.
+     return (trans&0xFF700000U)==(0x82000000U|((ddi+1)<<27)) &&
+-        !(trans&((1U<<15)|(1U<<9))) && !ctl2 &&
++        !(trans&((1U<<15)|(1U<<9))) && (!ctl2 || secondary) &&
+         (lanes==1 || lanes==2 || lanes==4) && ((buf>>1)&7)==lanes-1 &&
+         (buf&(typeC && tc->ownershipOptional?0x80000080U:0x800000C0U))==
+             (typeC && !tc->ownershipOptional?0x80000040U:0x80000000U) &&
+@@ -276,6 +307,16 @@ template<class IO> bool dpSourceUnchanged(IO &io,const DisplayReadout &r,unsigne
+         if(reg==Display13Power::AUX)expected|=addedAUXRequest;
+         if(io.read(reg)!=expected)return false;
+     }
++    uint32_t ctl2=0;
++    if(!value(r,0x60404+bank,ctl2))return false;
++    if(ctl2==8) {
++        uint32_t cmtg=0,power=0,clock=0,trans=0;
++        if(!value(r,0x6FA88,cmtg) || !value(r,0x45404,power) ||
++           !value(r,0x46140,clock) || !value(r,0x60400,trans) ||
++           !io.readable(0x6FA88) || io.read(0x45404)!=power ||
++           io.read(0x46140)!=clock || io.read(0x6FA88)!=cmtg ||
++           io.read(0x60400)!=trans || io.read(0x46140)!=clock || io.read(0x45404)!=power)return false;
++    }
+     return true;
+ }
+ // The GOP is already driving DP. Keep its physical AUX domain on without
+diff --git a/WhateverXe/kern_display13_edp_blank.hpp b/WhateverXe/kern_display13_edp_blank.hpp
+new file mode 100644
+index 0000000..57f14a2
+--- /dev/null
++++ b/WhateverXe/kern_display13_edp_blank.hpp
+@@ -0,0 +1,67 @@
++// -wex-edp-blank (only together with -wex-edp-keep): display sleep for the
++// kept firmware eDP link without running the donor's Doze -> Wake transition.
++// That transition stops the link, runs a complete mode set and leaves OLED
++// eDP 1.4 panels (Samsung ATNA family) dark. Instead, keep the pipe,
++// transcoder and link running and only stop scanning out: Doze/Off clear the
++// primary plane and cursor enables (the pipe then emits its black background,
++// an OLED emits no light), Wake restores them.
++// First implemented and verified on a Galaxy Book3 Ultra by vikenzo196
++// (fork commit 4c2a262); the same idea as the "backlight only" DPMS of
++// NootedGreen. Plane/cursor registers are latched by the following SURF/BASE write.
++#ifndef kern_display13_edp_blank_hpp
++#define kern_display13_edp_blank_hpp
++#include <stdint.h>
++
++namespace Display13EDPBlank {
++constexpr uint32_t PlaneCtl=0x70180, PlaneSurf=0x7019C; // PLANE_CTL_1_A / PLANE_SURF_1_A
++constexpr uint32_t CurCtl=0x70080, CurBase=0x70084;     // CUR_CTL_A / CUR_BASE_A
++constexpr uint32_t PlaneEnable=0x80000000U;
++constexpr uint32_t CursorMode=0x27; // MCURSOR_MODE_MASK; 0 disables the cursor.
++// Donor framebuffer power states: 0 off, 1 doze, 2 wake.
++constexpr uint32_t Wake=2;
++
++struct State {
++    bool blanked {};
++    uintptr_t fb {};              // The framebuffer whose panel is blanked.
++    uint32_t plane {}, cursor {}; // Values seen when blanking.
++    uint32_t blanks {}, unblanks {}, forgets {};
++};
++enum class Action : uint32_t { Native, Blank, Unblank, Keep };
++
++// eligible: the framebuffer scans out the adopted boot panel on a kept link.
++// owner: the framebuffer is the one whose panel is blanked.
++// current: the donor's recorded power state, requested: the new one.
++inline Action decide(bool eligible,bool owner,uint32_t current,uint32_t requested,bool blanked) {
++    // Another framebuffer (an external display, an offline connector) never
++    // touches the blanked panel: only the panel's own wake brings it back.
++    if(blanked && !owner)return Action::Native;
++    // The panel's own wake never leaves it dark, kept link or not.
++    if(!eligible || requested>Wake || current>Wake)return blanked && requested==Wake ? Action::Unblank : Action::Native;
++    if(requested<Wake)return blanked ? Action::Keep : Action::Blank;
++    if(blanked)return Action::Unblank;
++    // Already awake: nothing to do. A wake from a native doze stays native.
++    return current==Wake ? Action::Keep : Action::Native;
++}
++
++template<class IO> void blank(IO &io,State &s) {
++    s.plane=io.read(PlaneCtl);s.cursor=io.read(CurCtl);
++    io.write(CurCtl,s.cursor&~CursorMode);io.write(CurBase,io.read(CurBase));
++    io.write(PlaneCtl,s.plane&~PlaneEnable);io.write(PlaneSurf,io.read(PlaneSurf));
++    s.blanked=true;++s.blanks;
++}
++// Restore only the enables: the donor may legitimately reprogram format,
++// tiling or cursor size while the panel is dark (a later flip or mode set).
++template<class IO> void unblank(IO &io,State &s) {
++    const auto plane=io.read(PlaneCtl);
++    io.write(PlaneCtl,plane|(s.plane&PlaneEnable));io.write(PlaneSurf,io.read(PlaneSurf));
++    const auto cursor=io.read(CurCtl);
++    if(!(cursor&CursorMode) && (s.cursor&CursorMode)) {
++        io.write(CurCtl,(cursor&~CursorMode)|(s.cursor&CursorMode));io.write(CurBase,io.read(CurBase));
++    }
++    s.blanked=false;s.fb=0;++s.unblanks;
++}
++// The panel is no longer scanned out by pipe A, or the display hardware is not
++// up (a real system sleep): nothing to restore, and no register is written.
++inline void forget(State &s) {s.blanked=false;s.fb=0;++s.forgets;}
++}
++#endif
+diff --git a/WhateverXe/kern_display13_edp_keep.hpp b/WhateverXe/kern_display13_edp_keep.hpp
+new file mode 100644
+index 0000000..e9a612b
+--- /dev/null
++++ b/WhateverXe/kern_display13_edp_keep.hpp
+@@ -0,0 +1,117 @@
++// -wex-edp-keep: keep the firmware-trained Display13 eDP link.
++// The donor answers the first panel mode set with a complete mode set: it
++// stops the firmware's link and trains it again, and some panels never
++// complete that training on display 13 (the IdeaPad Slim 5 14IAH8's Samsung
++// ATNA40CT01 OLED fails channel equalization in every pattern and order).
++// When the firmware's pipe already runs exactly the requested active image
++// over a live eDP SST link in the same format, hwRegsNeedUpdate can answer
++// "no update": the donor's own same-mode branch then only switches the plane
++// and scaler to its surface ("Partial modeset"), as Linux fastboot does, and
++// never stops the link.
++// Pure comparison of the live pipe A registers with the donor's CRTCParams
++// (AppleIntelFramebufferController::SetupTimings/SetupParams/enablePipe:
++// +0x4 TRANS_DDI_FUNC_CTL, +0x10..+0x24 TRANS_HTOTAL/HBLANK/HSYNC/VTOTAL/
++// VBLANK/VSYNC, +0x28 PIPESRC), plus the receiver-caps and EDID views that
++// make the donor choose the firmware's usual eDP format (two lanes at HBR,
++// 8 bits per component) in the first place.
++#ifndef KERN_DISPLAY13_EDP_KEEP_HPP
++#define KERN_DISPLAY13_EDP_KEEP_HPP
++#include <stdint.h>
++namespace Display13EDPKeep {
++enum Reason : uint32_t {
++ NotPanel=1U<<0,  // not the panel's SST port on pipe A, or foreign objects
++ NotBoot=1U<<1,   // not the boot path WhateverXe adopted from the firmware
++ Readout=1U<<2,   // pipe registers unreadable or power changed while reading
++ NoSource=1U<<3,  // the firmware's eDP SST source is no longer running
++ PipeOff=1U<<4,   // TRANSCONF not enabled and active
++ Timing=1U<<5,    // requested active size differs from the pipe, or the
++                  // firmware scales its own source (a scaled GOP mode)
++ Format=1U<<6,    // lane count or color depth differs
++ Sink=1U<<7,      // DPCD lane status not trained (recorded only)
++ Blanking=1U<<8,  // totals or sync positions differ (recorded only: the pipe
++                  // keeps the firmware's refresh of the same active image)
++ Source=1U<<9,    // requested source size differs (recorded only: a scaled
++                  // mode of the native timing, see compare)
++};
++constexpr uint32_t Blocking=~uint32_t(Sink|Blanking|Source);
++// Registers in Live/record order: TRANS_DDI_FUNC_CTL, TRANSCONF, then the six
++// timing words and PIPESRC.
++constexpr uint32_t LiveRegisters[]={0x60400,0x70008,0x60000,0x60004,0x60008,0x6000C,0x60010,0x60014,0x6001C};
++struct Live {uint32_t func,transconf,timing[6],source;};
++struct Wanted {uint32_t func,timing[6],source;};
++inline uint32_t field(const void *base,uint32_t offset) {
++ uint32_t v;__builtin_memcpy(&v,static_cast<const uint8_t *>(base)+offset,4);return v;
++}
++inline Wanted wanted(const void *params) {
++ Wanted w{};w.func=field(params,0x4);
++ for(unsigned i=0;i<6;++i)w.timing[i]=field(params,0x10+4*i);
++ w.source=field(params,0x28);return w;
++}
++// PIPESRC bits 31:16 and 15:0 hold the source width and height minus one; the
++// source equals the active image when nothing scales it.
++inline bool sourceIsActive(const Live &live) {
++ return ((live.source>>16)&0x3FFFU)==(live.timing[0]&0x3FFFU) && (live.source&0x1FFFU)==(live.timing[3]&0x1FFFU);
++}
++// portLanes: the donor's AppleIntelPort +0x124 after setupClocks. The link
++// rate is not compared: the same-mode branch never touches the DPLL, the DDI
++// or the transcoder's M/N, so the pipe keeps the firmware's rate whatever the
++// donor computed (the IdeaPad's firmware leaves LINK_BW_SET 0x14 next to
++// LINK_RATE_SET 3; the donor picks HBR).
++// own: the latest decision on this path kept the link, so the live pipe source
++// and scaler are the donor's own. A source that differs with the same active
++// timing is a scaled mode: hwSetMode's same-mode branch (Tahoe donor, after
++// the hwRegsNeedUpdate call) compares the scaler parameters and, when they
++// differ, runs AppleIntelScaler::programPipeScaler, which writes the pipe
++// scaler, PIPESRC (the path's requested source) and re-arms the plane, with
++// the transcoder and the link untouched. Before any kept decision a source that
++// is not the active image is the firmware scaling a GOP mode: the donor's
++// cached scaler parameters do not describe it, so that stays a complete mode set.
++inline uint32_t compare(const Live &live,const Wanted &want,uint32_t portLanes,bool own=false) {
++ uint32_t reasons=0;
++ if((live.transconf&0xC0000000U)!=0xC0000000U)reasons|=PipeOff;
++ // HTOTAL/VTOTAL bits 13:0 (12:0) hold the active size minus one.
++ if((live.timing[0]&0x3FFFU)!=(want.timing[0]&0x3FFFU) || (live.timing[3]&0x1FFFU)!=(want.timing[3]&0x1FFFU))reasons|=Timing;
++ if(live.source!=want.source)reasons|=own || sourceIsActive(live) ? Source : Timing;
++ for(unsigned i=0;i<6;++i)if(live.timing[i]!=want.timing[i])reasons|=Blanking;
++ const auto lanes=((live.func>>1)&7)+1;
++ if(lanes!=portLanes || ((want.func>>1)&7)+1!=lanes || ((live.func^want.func)&0x00700000U))reasons|=Format;
++ return reasons;
++}
++// DPCD 0x202..0x204: every active lane CR, EQ and symbol lock, aligned.
++inline bool sinkTrained(const uint8_t *status,uint32_t lanes) {
++ if(!status || !lanes || lanes>4)return false;
++ for(uint32_t n=0;n<lanes;++n)if(((status[n/2]>>(4*(n&1)))&7)!=7)return false;
++ return status[2]&1;
++}
++// The panel's receiver caps as the donor's getDPCDInfo and link setup read
++// them, capped at HBR: MAX_LINK_RATE in the receiver caps (0x001) and the
++// extended caps (0x2201), the eDP 1.4 SUPPORTED_LINK_RATES table (0x010, 200 kHz
++// units, ascending, 0 ends it; getDPCDInfo prefers its highest entry over
++// MAX_LINK_RATE) and the LINK_BW_SET the donor reads back and reuses (0x100).
++// At HBR setupOptimalLaneCount gives a 1920x1200@60 8 bpc mode the firmware's
++// two lanes (one at HBR2). Nothing is written to the sink.
++inline void capLinkCaps(uint32_t address,uint8_t *data,uint32_t length) {
++ if(!data || !length)return;
++ const auto at=[&](uint32_t reg)->uint8_t *{return reg>=address && reg-address<length ? data+(reg-address) : nullptr;};
++ const uint32_t rates[]={0x001U,0x2201U,0x100U};
++ for(const auto reg:rates)if(auto b=at(reg); b && *b>0x0AU)*b=0x0A;
++ for(uint32_t i=0;i<8;++i) {
++  auto lo=at(0x10+2*i),hi=at(0x11+2*i);
++  if(lo && hi && uint32_t(*lo|(*hi<<8))>13500U)*lo=*hi=0;
++ }
++}
++// The panel EDID's DisplayPort color depth (EDID 1.4 video input definition,
++// bits 6:4) reported as 8 bits per component when it says more, with the
++// checksum fixed, so AGDC policy, mode validation and the mode set agree on the
++// firmware's depth. Anything but a digital EDID 1.4 base block is unchanged.
++inline bool edid8bpc(uint8_t *edid) {
++ static const uint8_t header[]={0,255,255,255,255,255,255,0};
++ if(!edid || __builtin_memcmp(edid,header,sizeof(header)) || edid[18]!=1 || edid[19]<4 ||
++    !(edid[20]&0x80) || ((edid[20]>>4)&7)<=2)return false;
++ edid[20]=uint8_t((edid[20]&0x8F)|0x20);
++ uint32_t sum=0;for(unsigned i=0;i<127;++i)sum+=edid[i];
++ edid[127]=uint8_t(-sum);
++ return true;
++}
++}
++#endif
+diff --git a/WhateverXe/kern_display13_fb_irq.hpp b/WhateverXe/kern_display13_fb_irq.hpp
+index 2dc2cad..4330184 100644
+--- a/WhateverXe/kern_display13_fb_irq.hpp
++++ b/WhateverXe/kern_display13_fb_irq.hpp
+@@ -37,6 +37,13 @@ struct HandlerScopes {
+ };
+ constexpr uint32_t Driver=0x45404, Master=0x44200, GfxMaster=0x190010;
+ constexpr uint32_t Enable=1U<<31, PipeOwned=0x8060E00D, PCHOwned=3U<<16;
++// ADL hard/soft and FIFO underrun. Reported once per arming, like i915: a pipe that keeps
++// underrunning re-fires per line and livelocks CPU 0 in the MSI filter.
++constexpr uint32_t PipeUnderruns=0x80600000U;
++// Display interrupts collected back to back without a vblank before the master is cut. A
++// storm fires thousands per frame; normal traffic between vblanks is a few events, and the
++// control path resets the count whenever the native driver configures VBL.
++constexpr uint32_t StormLimit=2000;
+ constexpr uint32_t PCHTypeC=0x3F000000, PCHCombo=7U<<16;
+ constexpr uint32_t TCControl=0xC4034;
+ constexpr uint32_t DDIControl=0xC4030, DDIStatus=0x33, DDIEnable=0x88;
+@@ -55,6 +62,7 @@ struct State {
+     uint32_t active {},configured {},priorIER[3] {},priorIMR[3] {},priorPCHIER {},priorPCHIMR {};
+     uint32_t priorTCEnable {},priorDDIEnable {},priorDSB[3][3] {},lastMaster {},raw[3] {},lastPCH {},lastDDI {},lastTC {},foreign {};
+     uint64_t interrupts {},vblanks[3] {},flips[3] {},underruns[3] {},dsbErrors[3] {};
++    uint32_t sinceVBlank {},storms {};
+ };
+ struct Events {uint32_t pipe {},aux {},hotplug {};Status status {Status::Unavailable};};
+ struct ActivePipes {Status status {Status::Unavailable};uint32_t active {},allowed {};};
+@@ -533,10 +541,13 @@ template<class IO> Status vblank(IO &io,State &s,unsigned pipe,bool enabled) {
+ // registry serialization, PCI config access, or unpowered pipe reads here.
+ template<class IO> Events collect(IO &io,State &s) {
+     Events e;
+-    if(!s.begun || !s.enabled || s.faulted)return e;
++    if(!s.begun)return e;
++    // A disabled or faulted bank must not leave the DE master armed: the native handler would
++    // re-read the display bit forever. Keep pending statuses for the next permitted handler.
++    if(!s.enabled || s.faulted) {if(io.readable(Master))io.write(Master,0);return e;}
+     const auto master=io.read(Master),wells=io.read(Driver);s.lastMaster=master;
+     if(master==UINT32_MAX) {e.status=fail(io,s,Status::Readback);return e;}
+-    io.write(Master,0);++s.interrupts;
++    io.write(Master,0);++s.interrupts;bool sawVBlank=false;
+     for(unsigned p=0;p<3;++p)if(master&(1U<<(16+p))) {
+         if(!powered(wells,p)) {e.status=fail(io,s,Status::Power);return e;}
+         if(!(s.active&(1U<<p))) {e.status=fail(io,s,Status::Topology);return e;}
+@@ -546,7 +557,14 @@ template<class IO> Events collect(IO &io,State &s) {
+         const auto raw=pending&PipeOwned,owned=status&PipeOwned;
+         if(owned)io.write(PipeIIR(p),owned);
+         e.pipe|=nativePipe(raw,p);
+-        if(raw&1)++s.vblanks[p];if(raw&8)++s.flips[p];if(raw&0x80600000)++s.underruns[p];
++        if(raw&1)++s.vblanks[p];if(raw&8)++s.flips[p];if(raw&PipeUnderruns)++s.underruns[p];
++        if(raw&1)sawVBlank=true;
++        if(raw&PipeUnderruns) {
++            // Mask further underrun reports on this pipe until enable() or
++            // extendActivePipes() re-arms the bank at the next modeset/wake.
++            io.write(PipeIIR(p)-4,io.read(PipeIIR(p)-4)|PipeUnderruns);
++            io.write(PipeIIR(p)+4,io.read(PipeIIR(p)+4)&~PipeUnderruns);
++        }
+         for(unsigned dsb=0;dsb<3;++dsb)if(raw&(1U<<(13+dsb))) {
+             const auto reg=DSBInterrupt(p,dsb),value=io.read(reg),errors=value&0xE;
+             if(value==UINT32_MAX) {e.status=fail(io,s,Status::Readback);return e;}
+@@ -585,6 +603,11 @@ template<class IO> Events collect(IO &io,State &s) {
+     }
+     const uint32_t supported=(7U<<16)|(1U<<23)|(s.typeC?(1U<<21):0U)|Enable;
+     if(master&~supported) {s.foreign|=master&~supported;e.status=fail(io,s,Status::ForeignIRQ);return e;}
++    if(sawVBlank)s.sinceVBlank=0;
++    else if(++s.sinceVBlank>=StormLimit) {
++        // Leave the master off: a frozen picture is recoverable, a CPU 0 livelock is a panic.
++        ++s.storms;e.status=fail(io,s,Status::Faulted,Master,master);return e;
++    }
+     io.write(Master,Enable);e.status=Status::Complete;return e;
+ }
+ }
+diff --git a/WhateverXe/kern_display13_fb_memory.hpp b/WhateverXe/kern_display13_fb_memory.hpp
+index ee5af80..23e1ede 100644
+--- a/WhateverXe/kern_display13_fb_memory.hpp
++++ b/WhateverXe/kern_display13_fb_memory.hpp
+@@ -267,9 +267,11 @@ inline bool sharedReservationAccepted(const SharedReservation &r,uint64_t manage
+ // A valid subrange alone does not prove the GGTT's mapping; inspect() does that.
+ // bootScanout=false verifies backing/ownership for a cold allocation without
+ // reading any pipe bank or treating the allocation as an active display.
++// The start is a page; the length is the native byte count, width x height x 4, which
++// need not be whole pages (2880x1620, 1600x900). Its last page must still be inside.
+ inline bool apertureRange(const Pool &p,uint32_t base,uint32_t bytes,uint64_t apertureBytes) {
+-    return bytes && !(base&4095) && !(bytes&4095) && base>=p.base &&
+-        uint64_t(base)+bytes<=uint64_t(p.base)+p.bytes && uint64_t(base)+bytes<=apertureBytes;
++    const auto end=uint64_t(base)+((uint64_t(bytes)+4095)&~uint64_t(4095));
++    return bytes && !(base&4095) && base>=p.base && end<=uint64_t(p.base)+p.bytes && end<=apertureBytes;
+ }
+ // Native IntelScaledModeData is a 64-byte CPU allocation. Its map/memory
+ // references are owned by the display pipe until native deallocateScanoutMemory.
+diff --git a/WhateverXe/kern_display13_fb_topology.hpp b/WhateverXe/kern_display13_fb_topology.hpp
+index d005c9b..bba4e25 100644
+--- a/WhateverXe/kern_display13_fb_topology.hpp
++++ b/WhateverXe/kern_display13_fb_topology.hpp
+@@ -33,6 +33,11 @@ inline bool multiOutputWiring(const Display13OutputWiring &w) {
+ inline bool singleOutputWiring(const Display13OutputWiring &w) {
+     return selectedWiring(w) && !multiOutputWiring(w);
+ }
++// An eDP panel next to other VBT outputs counts as multi-output, but while its
++// boot pipe A is the only one with a framebuffer a clock change has no peer to order.
++inline bool panelOnlyClock(const Display13OutputWiring &w,uint32_t bootPort,bool pipeA,bool pipeB,bool pipeC) {
++    return multiOutputWiring(w) && bootPort<Ports && (w.panel&(1U<<bootPort)) && pipeA && !pipeB && !pipeC;
++}
+ inline uint32_t singleDDI(const Display13OutputWiring &w) {
+     if(!singleOutputWiring(w))return UINT32_MAX;
+     for(unsigned d=0;d<Ports;++d)if(w.selected()&(1U<<d))return d;
+diff --git a/WhateverXe/kern_display13_framebuffer_power.inc b/WhateverXe/kern_display13_framebuffer_power.inc
+index 51964a5..9c1d926 100644
+--- a/WhateverXe/kern_display13_framebuffer_power.inc
++++ b/WhateverXe/kern_display13_framebuffer_power.inc
+@@ -7,6 +7,15 @@ uint32_t XE::wrapDisplay13SetPowerState(IOService *fb,uint32_t state) {
+     bool notifyWake=false;
+     bool nativePowerOn=false;
+     recordDSIClient(fb,9,state,UINT32_MAX);
++    // -wex-edp-blank: display sleep of the kept eDP panel path scans nothing
++    // out instead of running the donor's power transition (link stop, retraining).
++    if(!callbackXE->adlnOutputWiring.dsi) {
++        uint32_t blankResult=kIOReturnSuccess;
++        if(display13EDPBlankPower(fb,state,blankResult)) {
++            recordDSIClient(fb,9,state,blankResult);
++            return blankResult;
++        }
++    }
+     // Subscribers can re-enter clients. Serialize this transport's callback,
+     // without holding its FB mutex across notifications.
+     auto busy=callbackXE->adlnOutputWiring.dsi && fb &&
+diff --git a/WhateverXe/kern_xe.cpp b/WhateverXe/kern_xe.cpp
+index c94f4e7..a8f29ee 100644
+--- a/WhateverXe/kern_xe.cpp
++++ b/WhateverXe/kern_xe.cpp
+@@ -1,5 +1,7 @@
+ #include "kern_display13_color.hpp"
+ #include <mach/clock.h>
++#include <kern/clock.h>
++#include <kern/thread_call.h>
+ #include <IOKit/IOMessage.h>
+ #include <IOKit/graphics/IOGraphicsTypes.h>
+ //
+@@ -55,6 +57,8 @@
+ #include "kern_adls_clock.hpp"
+ #include "kern_adls_boot.hpp"
+ #include "kern_tgl_combo_signal.hpp"
++#include "kern_display13_edp_keep.hpp"
++#include "kern_display13_edp_blank.hpp"
+ #include "kern_tgl_panel_depth.hpp"
+ #include "kern_xelp_panel_power.hpp"
+ #include "kern_display13_panel.hpp"
+@@ -4795,7 +4799,7 @@ struct Display13FBIRQContext {
+ 	IOSimpleLock *lock {};
+ 	IOService *controller {};
+ 	Display13FBIRQ::State state;
+-	unsigned handlers {},softwareHandlers {};bool quiescing {},powerLost {};uint32_t blockedPipes {};
++	unsigned handlers {},softwareHandlers {};bool quiescing {},powerLost {},faultPublished {};uint32_t blockedPipes {};
+ 	uintptr_t softwareThread {};
+ 	Display13FBIRQ::HandlerScopes scopes;
+ 	volatile uint32_t admittedPipes {}; // Release-published after actual path/backing proof.
+@@ -4961,7 +4965,8 @@ static void adlnIRQRecord(uint64_t (&r)[32],unsigned event) {
+ 	r[10]=s.interrupts;
+ 	for(unsigned p=0;p<3;++p) {r[11+p]=s.vblanks[p];r[14+p]=s.flips[p];r[17+p]=s.underruns[p];r[20+p]=s.dsbErrors[p];r[23+p]=s.raw[p];}
+ 	r[26]=s.lastPCH;r[27]=s.lastDDI;r[28]=reinterpret_cast<uintptr_t>(c.controller);
+-	r[29]=reinterpret_cast<uintptr_t>(c.lock);r[30]=c.handlers;r[31]=c.quiescing|(c.blockedPipes<<8)|(uint64_t(c.softwareHandlers)<<32);
++	r[29]=reinterpret_cast<uintptr_t>(c.lock);r[30]=c.handlers;
++	r[31]=c.quiescing|(c.blockedPipes<<8)|(uint64_t(c.softwareHandlers&0xFFFF)<<32)|(uint64_t(s.storms&0xFFFF)<<48);
+ }
+ 
+ 
+@@ -5205,6 +5210,9 @@ static bool adlnBeginClockGuard(Display13FBClockGuard &g) {
+ 	if(irq.quiescing || g.master==UINT32_MAX) {IOSimpleLockUnlockEnableInterrupt(irq.lock,saved);failure(2);return false;}
+ 	g.held=true;g.enabled=irq.state.enabled;irq.quiescing=true;irq.blockedPipes=7;
+ 	io.write(Display13FBIRQ::Master,0);irq.state.enabled=false;
++	// Refresh the native cached DE master (c+D84) too: ProcessInterrupt restores the master
++	// from it, which would re-arm DE inside this scope and spin on a deferred display bit.
++	{Display13FBIRQIO irqIO {irq.base};adlnIRQCache(irq.controller,irqIO);}
+ 	IOSimpleLockUnlockEnableInterrupt(irq.lock,saved);
+ 	bool quiet=false;
+ 	for(unsigned ms=0;ms<=20;++ms) {
+@@ -6091,14 +6099,67 @@ bool XE::processDisplay13FramebufferIRQ(KernelPatcher &patcher,size_t index,mach
+ 	patcher.clearError();
+ 	KernelPatcher::RouteRequest swRoute {swSymbol,wrapDisplay13FBSWIRQ,orgDisplay13FBSWIRQ};
+ 	const bool swRouted=routed && patcher.routeMultipleShort(index,&swRoute,1,address,size);
+-	patcher.clearError();return swRouted;
++	patcher.clearError();
++	// AppleIntelFramebufferController::IdleTimerFired re-enables a DE master it finds disabled
++	// (DISPLAY_INT_CTL |= Enable) and fakes a VBL. WEX owns that master: it parks it off across
++	// display sleep/wake, power and clock scopes, faults and storms, with c+FD4 = 0 so the native
++	// ProcessInterrupt skips processDE. Re-armed behind WEX, the display bit is never serviced and
++	// the GT master re-fires forever: CPU 0 livelock, then lock-timeout or NVMe-timeout panics a few
++	// seconds after display wake (Precision 5570). Skip that recovery branch (js -> jmp). Exact
++	// donor bytes only; a mismatch leaves it alone and is visible as WEXIdleTimerGuard = false.
++	if(swRouted) {
++		const char *idleSymbol="__ZN31AppleIntelFramebufferController14IdleTimerFiredEv";
++		const auto idle=patcher.solveSymbol<mach_vm_address_t>(index,idleSymbol,address,size);patcher.clearError();
++		const uint8_t idleBefore[] {0x85,0xDB,0x78,0x5C},idleAfter[] {0x85,0xDB,0xEB,0x5C};
++		// test ebx,ebx (85 DB) at +0x56CF0, js +0x5C (78 5C) at +0x56CF2: the pattern starts at the test
++		constexpr uint32_t idleBranch=0x56CF0;
++		bool idleOk=idle==address+0x56C2A && size>idleBranch+sizeof(idleBefore) &&
++			!memcmp(reinterpret_cast<void *>(address+idleBranch),idleBefore,sizeof(idleBefore));
++		if(idleOk) {
++			KernelPatcher::LookupPatch idlePatch {currentFramebuffer,idleBefore,idleAfter,sizeof(idleBefore),1};
++			patcher.applyLookupPatch(&idlePatch,reinterpret_cast<uint8_t *>(address+idleBranch),sizeof(idleBefore)+1);
++			idleOk=patcher.getError()==KernelPatcher::Error::NoError &&
++				!memcmp(reinterpret_cast<void *>(address+idleBranch),idleAfter,sizeof(idleAfter));
++			patcher.clearError();
++		}
++		IORegistryEntry::getRegistryRoot()->setProperty("WEXIdleTimerGuard",idleOk);
++		// Wake re-arm from the idle timer (display13FBRearmParked). Short route: the prologue
++		// 55 48 89 E5 41 57 41 56 53 50 is followed by a RIP-relative incq a long route would copy.
++		const uint8_t idleEntry[] {0x55,0x48,0x89,0xE5,0x41,0x57,0x41,0x56,0x53,0x50};
++		bool idleRouted=idleOk && !memcmp(reinterpret_cast<void *>(idle),idleEntry,sizeof(idleEntry));
++		if(idleRouted) {
++			KernelPatcher::RouteRequest idleRoute {idleSymbol,wrapDisplay13FBIdleTimer,orgDisplay13FBIdleTimer};
++			idleRouted=patcher.routeMultipleShort(index,&idleRoute,1,address,size);
++			patcher.clearError();
++		}
++		IORegistryEntry::getRegistryRoot()->setProperty("WEXIdleTimerRearm",idleRouted);
++	}
++	return swRouted;
+ }
+ 
++// -wex-no-edp-hpd: keep the internal eDP panel's HPD-A masked, as the DSI
++// route already does. On the XPS 17 9720 (ADL-H 46A6) the panel raises one
++// PCH HPD-A interrupt ~35 ms after link training and the machine hard-freezes
++// right after; with the bit never unmasked it runs normally. The panel is
++// fixed, so no hotplug on Combo A is lost.
++static bool display13NoEdpHPD(const Display13OutputWiring &w) {
++	static int cached=-1;
++	if(cached<0)cached=checkKernelArgument("-wex-no-edp-hpd") && (w.panel&1) ? 1 : 0;
++	return cached==1;
++}
++static uint32_t display13HotplugPorts(const Display13OutputWiring &w) {
++	const auto ports=w.hotplug();
++	return display13NoEdpHPD(w) ? (ports&~1U) : ports;
++}
++static uint32_t display13ExcludedHotplug(const void *platform,uint32_t bytes,const Display13OutputWiring &w) {
++	const auto excluded=Display13FBTopology::excludedHotplug(platform,bytes,w);
++	return display13NoEdpHPD(w) ? (excluded|(1U<<16)) : excluded;
++}
+ IOReturn XE::wrapDisplay13FBEnableIRQ(IOService *controller) {
+ 	if(!callbackXE->display13FBIRQReady || !adlnIRQOwner(controller))return kIOReturnNotReady;
+ 	auto &c=display13FBIRQ;uint64_t record[32] {},check[42] {3};Display13FBIRQIO io {c.base};
+ 	const auto excluded=controller==callbackXE->adlnTopologyController ?
+-		Display13FBTopology::excludedHotplug(callbackXE->adlnPlatform,sizeof(callbackXE->adlnPlatform),callbackXE->adlnOutputWiring) : 0;
++		display13ExcludedHotplug(callbackXE->adlnPlatform,sizeof(callbackXE->adlnPlatform),callbackXE->adlnOutputWiring) : 0;
+ 	const auto saved=IOSimpleLockLockDisableInterrupt(c.lock);
+ 	// Preserve enable evidence even when start rejects its unpublished
+ 	// controller. Inspect only pipe banks already qualified as powered.
+@@ -6121,8 +6182,24 @@ IOReturn XE::wrapDisplay13FBEnableIRQ(IOService *controller) {
+ 		const auto actual=Display13FBIRQ::readActivePipes(io,admitted,c.state.transcoders);
+ 		c.status=c.quiescing ? Display13FBIRQ::Status::Power : actual.status;
+ 		if(c.status==Display13FBIRQ::Status::Complete)c.status=c.state.begun && c.state.enabled ?
+-			Display13FBIRQ::extendActivePipes(io,c.state,admitted) : Display13FBIRQ::enable(io,c.state,excluded,adlnSharedGT(controller),actual.active,callbackXE->adlnOutputWiring.hotplug(),callbackXE->adlnOutputWiring.typeC);
+-	} else c.status=c.quiescing ? Display13FBIRQ::Status::Power : Display13FBIRQ::enable(io,c.state,excluded,adlnSharedGT(controller),1,callbackXE->adlnOutputWiring.hotplug(),callbackXE->adlnOutputWiring.typeC);
++			Display13FBIRQ::extendActivePipes(io,c.state,admitted) : Display13FBIRQ::enable(io,c.state,excluded,adlnSharedGT(controller),actual.active,display13HotplugPorts(callbackXE->adlnOutputWiring),callbackXE->adlnOutputWiring.typeC);
++	} else if(c.quiescing)c.status=Display13FBIRQ::Status::Power;
++	else if(c.state.begun && !c.state.faulted && !(c.state.enabled && c.state.active) &&
++		!Display13Transcoder::running(io,0,c.state.transcoders)) {
++		// Single-output, pipe A not running: display sleep, or wake before enablePipe
++		// sets PIPECONF. A full enable() here sees no active pipe, fails Topology and
++		// faults the bank, so the wake re-arm below never runs and flips never
++		// complete. Arming hotplug-only instead (WEX #22-6) hangs a panel-only laptop
++		// on display sleep: the eDP power-down HPD arrives while the transition
++		// quiesces, is deferred unacknowledged and re-fires forever (CPU 0 stuck in
++		// _interrupt, lock-timeout panics, Precision 5570). An internal panel needs
++		// no hotplug IRQ: park the display master off, not faulted, with no armed
++		// bank. wrapDisplay13FBConfigureVBL re-arms the whole bank once the
++		// transcoder runs.
++		const auto parked=c.state.enabled ? Display13FBIRQ::disable(io,c.state) : Display13FBIRQ::Status::Complete;
++		if(parked==Display13FBIRQ::Status::Complete)c.state.active=0;
++		c.status=parked==Display13FBIRQ::Status::Complete ? Display13FBIRQ::Status::Power : parked;
++	} else c.status=Display13FBIRQ::enable(io,c.state,excluded,adlnSharedGT(controller),1,display13HotplugPorts(callbackXE->adlnOutputWiring),callbackXE->adlnOutputWiring.typeC);
+ 	adlnIRQCache(controller,io);adlnIRQRecord(record,1);
+ 	check[23]=static_cast<uint32_t>(c.status);check[24]=c.state.begun;
+ 	check[25]=c.state.enabled;check[26]=c.state.faulted;check[27]=c.state.active;check[28]=c.state.configured;
+@@ -6133,7 +6210,9 @@ IOReturn XE::wrapDisplay13FBEnableIRQ(IOService *controller) {
+ 	check[37]=c.state.failureRegister;check[38]=c.state.failureBits;
+ 	check[39]=excluded;check[40]=io.read(0xC400C);check[41]=io.read(0xC4004);
+ 	const bool enabled=c.status==Display13FBIRQ::Status::Complete;
++	const bool retry=!enabled && c.state.begun && !c.state.faulted;
+ 	IOSimpleLockUnlockEnableInterrupt(c.lock,saved);
++	if(retry)display13FBRearmSchedule();
+ 	controller->setProperty("N97FBIRQ",record,sizeof(record));
+ 	IORegistryEntry::getRegistryRoot()->setProperty("N97FBIRQEnableCheck",check,sizeof(check));
+ 	if(!check[3])IORegistryEntry::getRegistryRoot()->setProperty("N97FBIRQFirstEnableCheck",check,sizeof(check));
+@@ -6149,6 +6228,86 @@ IOReturn XE::wrapDisplay13FBDisableIRQ(IOService *controller) {
+ 	controller->setProperty("N97FBIRQ",record,sizeof(record));
+ 	return disabled ? kIOReturnSuccess : kIOReturnNotReady;
+ }
++// Display wake on a single-output (panel-only) wiring: the donor's hwEnableInterrupts runs
++// before enablePipe sets PIPECONF, so wrapDisplay13FBEnableIRQ parks the DE master, or its
++// power-loss restore fails Topology (pipe A not running yet). On this path the donor does not
++// follow with hwConfigureVBLInterrupt, and its IdleTimerFired fallback (a bare DISPLAY_INT_CTL
++// enable that leaves c+0xFD4 = 0) is cut by the WEX idle guard because it livelocked CPU 0.
++// Without a re-arm no VBL arrives, flips never complete and WindowServer hangs (Precision 5570,
++// 2026-11-08). Re-arm the whole bank once pipe A runs, under the native IRQ lock, with the same
++// helpers as EnableIRQ/ConfigureVBL. Published as N97FBIRQ event 4.
++bool XE::display13FBRearmParked(IOService *controller) {
++	auto &c=display13FBIRQ;
++	if(!callbackXE->display13FBIRQReady || !adlnIRQOwner(controller) || !c.lock)return true;
++	static uint64_t ticks,attempts,completes;
++	Display13FBIRQIO io {c.base};uint64_t record[32] {},probe[20] {};bool attempted=false,done=false;
++	// An eDP panel next to other VBT outputs (Type-C DP on the 5570) is multi-output wiring:
++	// there the parked master comes from DisableIRQ or a power-loss restore that failed Topology.
++	const bool multi=Display13FBTopology::multiOutputWiring(callbackXE->adlnOutputWiring);
++	const auto admitted=__atomic_load_n(&c.admittedPipes,__ATOMIC_ACQUIRE);
++	const auto saved=IOSimpleLockLockDisableInterrupt(c.lock);
++	const auto wells=io.read(Display13FBIRQ::Driver);
++	const bool powered=Display13FBIRQ::powered(wells,0);
++	Display13FBIRQ::ActivePipes actual {};
++	bool running=false;
++	if(multi) {
++		actual=Display13FBIRQ::readActivePipes(io,admitted,c.state.transcoders);
++		running=actual.status==Display13FBIRQ::Status::Complete;
++	} else running=powered && Display13Transcoder::running(io,0,c.state.transcoders);
++	const bool parked=c.state.begun && !c.state.faulted && !(c.state.enabled && c.state.active);
++	if(parked && !c.quiescing && !c.blockedPipes && running) {
++		if(c.powerLost) {
++			c.status=Display13FBIRQ::restoreAfterPowerLoss(io,c.state,admitted);
++			if(c.status==Display13FBIRQ::Status::Complete)c.powerLost=false;
++		} else {
++			const auto excluded=controller==callbackXE->adlnTopologyController ?
++				display13ExcludedHotplug(callbackXE->adlnPlatform,sizeof(callbackXE->adlnPlatform),callbackXE->adlnOutputWiring) : 0;
++			c.status=Display13FBIRQ::enable(io,c.state,excluded,adlnSharedGT(controller),multi ? actual.active : 1U,
++				display13HotplugPorts(callbackXE->adlnOutputWiring),callbackXE->adlnOutputWiring.typeC);
++		}
++		attempted=true;done=c.status==Display13FBIRQ::Status::Complete;
++		++attempts;if(done)++completes;
++		adlnIRQCache(controller,io);adlnIRQRecord(record,4);
++	}
++	// Probe: why a re-arm did or did not happen (read with ioreg on the registry root).
++	probe[0]=++ticks;probe[1]=attempts;probe[2]=completes;probe[3]=c.state.begun;probe[4]=c.state.enabled;
++	probe[5]=c.state.active;probe[6]=c.state.faulted;probe[7]=c.quiescing;probe[8]=c.blockedPipes;probe[9]=c.powerLost;
++	probe[10]=wells;probe[11]=powered;probe[12]=running;
++	probe[13]=powered ? Display13Transcoder::control(io,0,c.state.transcoders) : 0xDEADu;
++	probe[14]=io.read(Display13FBIRQ::Master);probe[15]=static_cast<uint32_t>(c.status);
++	probe[16]=multi;probe[17]=admitted;probe[18]=actual.active;probe[19]=static_cast<uint32_t>(actual.status);
++	IOSimpleLockUnlockEnableInterrupt(c.lock,saved);
++	if(attempted)controller->setProperty("N97FBIRQ",record,sizeof(record));
++	IORegistryEntry::getRegistryRoot()->setProperty("WEXRearmProbe",probe,sizeof(probe));
++	return done || !parked; // re-armed, or nothing parked any more (re-armed elsewhere or faulted)
++}
++// EnableIRQ declined (display sleep, or wake before enablePipe sets PIPECONF): retry
++// the re-arm from a WEX thread call every 50 ms for up to 10 s, independent of donor callbacks.
++// The donor arms its idle timer from completed flips, so IdleTimerFired alone may never come.
++static thread_call_t adlnRearmCall {};
++static int32_t adlnRearmLeft {};
++void XE::display13FBRearmSchedule() {
++	if(!adlnRearmCall)adlnRearmCall=thread_call_allocate(reinterpret_cast<thread_call_func_t>(display13FBRearmTick),nullptr);
++	if(!adlnRearmCall)return;
++	__atomic_store_n(&adlnRearmLeft,200,__ATOMIC_RELEASE);
++	uint64_t deadline {};clock_interval_to_deadline(50,kMillisecondScale,&deadline);
++	thread_call_enter_delayed(adlnRearmCall,deadline);
++}
++void XE::display13FBRearmTick(void *,void *) {
++	auto controller=__atomic_load_n(&display13FBIRQ.controller,__ATOMIC_ACQUIRE);
++	if(!controller || display13FBRearmParked(controller))return;
++	if(__atomic_sub_fetch(&adlnRearmLeft,1,__ATOMIC_ACQ_REL)>0) {
++		uint64_t deadline {};clock_interval_to_deadline(50,kMillisecondScale,&deadline);
++		thread_call_enter_delayed(adlnRearmCall,deadline);
++	}
++}
++// IdleTimerFired runs on the controller work loop a few seconds after display wake; it is the
++// first native callback after enablePipe on this path. Re-arm first, then the original (whose
++// bare re-enable branch the idle guard skips).
++void XE::wrapDisplay13FBIdleTimer(IOService *controller) {
++	display13FBRearmParked(controller);
++	FunctionCast(wrapDisplay13FBIdleTimer,callbackXE->orgDisplay13FBIdleTimer)(controller);
++}
+ void XE::wrapDisplay13FBConfigureVBL(IOService *controller,IOService *fb,OSObject *path,bool enabled,bool getLock) {
+ 	if(!adlnIRQOwner(controller) || !fb || !path)return;
+ 	auto &c=display13FBIRQ;Display13FBIRQIO io {c.base};
+@@ -6158,6 +6317,7 @@ void XE::wrapDisplay13FBConfigureVBL(IOService *controller,IOService *fb,OSObjec
+ 	const bool valid=display13FBAssociations(controller,0x1C20,fb,fb->getMetaClass()->getClassSize(),display13FBExpectedOwner(controller)) &&
+ 		path->getMetaClass()->getClassSize()>=0x3730;
+ 	const auto pipe=valid ? Display13FBMemory::field<uint32_t>(path,0x3640) : 3;
++	c.state.sinceVBlank=0; // native VBL control activity: not an interrupt storm
+ 	if(Display13FBTopology::multiOutputWiring(callbackXE->adlnOutputWiring) && (c.quiescing || (pipe<3 && (c.blockedPipes&(1U<<pipe))))) {
+ 		c.status=Display13FBIRQ::Status::Power;adlnIRQCache(controller,io);
+ 		if(getLock)IOSimpleLockUnlockEnableInterrupt(c.lock,saved);return;
+@@ -6170,17 +6330,27 @@ void XE::wrapDisplay13FBConfigureVBL(IOService *controller,IOService *fb,OSObjec
+ 		}
+ 		// Native enablePipe enables PIPECONF before this VBL callback. Re-arm
+ 		// the full pipe bank only at that real activation boundary after idle HPD.
+-		if(!Display13FBTopology::multiOutputWiring(callbackXE->adlnOutputWiring) && enabled && c.state.begun && c.state.enabled && !c.state.active && !c.state.faulted &&
++		// Also re-arm a bank parked off (not enabled) by the single-output branch of
++		// wrapDisplay13FBEnableIRQ while the pipe was down.
++		if(!Display13FBTopology::multiOutputWiring(callbackXE->adlnOutputWiring) && enabled && c.state.begun && (!c.state.enabled || !c.state.active) && !c.state.faulted &&
+ 			Display13FBIRQ::powered(io.read(Display13FBIRQ::Driver),pipe) && Display13Transcoder::running(io,pipe,c.state.transcoders)) {
+ 			const auto excluded=controller==callbackXE->adlnTopologyController ?
+-				Display13FBTopology::excludedHotplug(callbackXE->adlnPlatform,sizeof(callbackXE->adlnPlatform),callbackXE->adlnOutputWiring) : 0;
+-			c.status=Display13FBIRQ::enable(io,c.state,excluded,adlnSharedGT(controller),1,callbackXE->adlnOutputWiring.hotplug(),callbackXE->adlnOutputWiring.typeC);
++				display13ExcludedHotplug(callbackXE->adlnPlatform,sizeof(callbackXE->adlnPlatform),callbackXE->adlnOutputWiring) : 0;
++			c.status=Display13FBIRQ::enable(io,c.state,excluded,adlnSharedGT(controller),1,display13HotplugPorts(callbackXE->adlnOutputWiring),callbackXE->adlnOutputWiring.typeC);
+ 		}
+ 		if(!c.state.faulted)c.status=Display13FBIRQ::vblank(io,c.state,pipe,enabled);
+ 	}
+ 	else c.status=Display13FBIRQ::fail(io,c.state,Display13FBIRQ::Status::Topology);
+ 	adlnIRQCache(controller,io);
++	// Publish the first fault seen here (e.g. the interrupt storm breaker) once, so it can be
++	// read without waiting for the next native Enable/DisableIRQ. Registry writes need the
++	// simple lock released, so only when this call took it.
++	uint64_t record[32] {};
++	const bool publish=getLock && c.state.faulted && !c.faultPublished;
++	if(publish) {c.faultPublished=true;adlnIRQRecord(record,3);}
++	else if(!c.state.faulted)c.faultPublished=false;
+ 	if(getLock)IOSimpleLockUnlockEnableInterrupt(c.lock,saved);
++	if(publish)controller->setProperty("N97FBIRQFault",record,sizeof(record));
+ }
+ bool XE::wrapDisplay13FBProcessIRQ(IOService *controller) {
+ 	if(!adlnIRQOwner(controller))return false;
+@@ -6230,13 +6400,22 @@ void XE::wrapDisplay13FBProcessDE(IOService *controller,uint32_t *pipe,uint32_t
+ 	// Native ProcessInterrupt already holds c+90. Permission belongs to its
+ 	// entry scope, even if a power/clock caller restored state.enabled since.
+ 	// Keep all hardware pending untouched for a subsequent permitted handler.
+-	if(!c.scopes.permits(reinterpret_cast<uintptr_t>(current_thread())))return;
+-	const auto e=Display13FBIRQ::collect(io,c.state);c.status=e.status;
+-	*pipe=e.pipe;*aux=e.aux;*hotplug=e.hotplug;
+-	if(c.state.faulted) {
++	const auto dropCache=[controller] {
+ 		*reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(controller)+0xD84)=0;
+ 		*(reinterpret_cast<uint8_t *>(controller)+0xFD4)=0;
++	};
++	if(!c.scopes.permits(reinterpret_cast<uintptr_t>(current_thread()))) {
++		// The native ProcessInterrupt re-arms the DE master from c+D84 after this call and
++		// loops while the GT master still shows a display bit: with nothing serviced it never
++		// returns (CPU 0 livelock in interrupt context, spinlock-timeout panics after display
++		// wake, Precision 5570). A disabled bank stays off in hardware and in the cache; its
++		// pending statuses remain for the permitted handler once the scope ends.
++		if(!c.state.enabled) {dropCache();if(io.readable(Display13FBIRQ::Master))io.write(Display13FBIRQ::Master,0);}
++		return;
+ 	}
++	const auto e=Display13FBIRQ::collect(io,c.state);c.status=e.status;
++	*pipe=e.pipe;*aux=e.aux;*hotplug=e.hotplug;
++	if(c.state.faulted || !c.state.enabled)dropCache();
+ }
+ 
+ bool XE::processDisplay13FramebufferGTT(KernelPatcher &patcher,size_t index,mach_vm_address_t address,size_t size) {
+@@ -7365,12 +7544,44 @@ bool XE::display13AUXReady(void *port,bool command,bool retained) {
+  Display13FBPowerIO io {c.map};return c.bridge.beginAUXCommand(io,config[0]);
+ }
+ 
++// -wex-edp-keep: keep the firmware-trained panel link (kern_display13_edp_keep,
++// wrapDisplay13RegsNeedUpdate). The panel's receiver caps and EDID are seen
++// in the firmware's usual eDP format so the donor's mode set requests it.
++static bool display13EDPKeep() {
++ static int v=-1;if(v<0)v=checkKernelArgument("-wex-edp-keep") ? 1 : 0;
++ return v==1;
++}
++// -wex-edp-keep with its decision hook installed. The panel's capped link caps,
++// 8 bpc EDID and 8 bpc mode only make the donor's request match the kept
++// firmware link: without the hook (another donor build) nothing is kept, so
++// the donor's whole path stays native.
++bool XE::display13EDPKeepActive() {
++ return display13EDPKeep() && callbackXE && callbackXE->orgDisplay13RegsNeedUpdate;
++}
++// WEXEDPKeepFirst / WEXEDPKeep, one record per complete mode set the donor
++// asked for on a display path while -wex-edp-keep is set (the first one, which
++// still sees the firmware's link, and the last one are published):
++//   version, call, kept (count of kept links), reasons (Display13EDPKeep::Reason),
++//   ddi, pipe, path state (+3644), port lanes (+124), port rate (+128, recorded
++//   only), live TRANS_DDI_FUNC_CTL/TRANSCONF/H,V timings/PIPESRC, requested
++//   TRANS_DDI_FUNC_CTL/timings/PIPESRC, DPCD 0x202..0x207.
++struct Display13EDPKeepRecord {
++ uint32_t version,call,kept,reasons,ddi,pipe,state,portLanes,portRate;
++ uint32_t live[9],wanted[8];uint8_t status[8];
++};
++static volatile uint32_t display13EDPKeepCalls=0,display13EDPKeepKept=0;
++// The panel path whose latest mode-set decision kept the firmware's link; 0 once
++// a complete mode set was requested. Read by -wex-edp-blank.
++static volatile uintptr_t display13EDPKeepPath=0;
+ uint32_t XE::wrapDisplay13ReadAUX(void *port,uint32_t address,void *data,uint32_t length) {
+  auto &c=display13FBPower;if(!c.lock)return kIOReturnNotReady;
+  IOLockLock(c.lock);const bool ready=display13AUXReady(port,false);IOLockUnlock(c.lock);
+  if(!ready)return kIOReturnNotReady;
+  const auto r=FunctionCast(wrapDisplay13ReadAUX,callbackXE->orgDisplay13ReadAUX)(port,address,data,length);
+- IOLockLock(c.lock);const bool complete=display13AUXReady(port,false);IOLockUnlock(c.lock);
++ IOLockLock(c.lock);const bool complete=display13AUXReady(port,false);
++ const auto ddi=complete ? Display13FBMemory::field<uint32_t>(port,0x120) : UINT32_MAX;
++ const bool panel=ddi<2 && (callbackXE->adlnOutputWiring.panel&(1U<<ddi));IOLockUnlock(c.lock);
++ if(!r && complete && panel && display13EDPKeepActive())Display13EDPKeep::capLinkCaps(address,static_cast<uint8_t *>(data),length);
+  return r ? r : complete ? 0 : kIOReturnNotReady;
+ }
+ uint32_t XE::wrapDisplay13WriteAUX(void *port,uint32_t address,void *data,uint32_t length) {
+@@ -7620,6 +7831,21 @@ bool XE::processDisplay13FramebufferSST(KernelPatcher &patcher,size_t index,mach
+   {disable,wrapDisplay13DisablePort,orgDisplay13DisablePort}
+  };
+  display13FBSSTHooksReady=patcher.routeMultiple(index,routes,arrsize(routes),address,size);patcher.clearError();
++ // -wex-edp-keep only: the mode-set decision (wrapDisplay13RegsNeedUpdate) at
++ // its Tahoe TGL framebuffer address. Its 17-byte prologue has no
++ // RIP-relative operand; a missing hook leaves the donor's own decision and
++ // the rest of the SST frontend unchanged.
++ if(display13FBSSTHooksReady && display13EDPKeep()) {
++  const char *regs="__ZN31AppleIntelFramebufferController16hwRegsNeedUpdateEP21AppleIntelFramebufferP21AppleIntelDisplayPathP10CRTCParamsPK29IODetailedTimingInformationV2PN16AppleIntelScaler12SCALERPARAMSE";
++  const uint8_t regsEntry[]={0x55,0x48,0x89,0xe5,0x41,0x57,0x41,0x56,0x41,0x55,0x41,0x54,0x53,0x48,0x83,0xec,0x18};
++  const auto u=patcher.solveSymbol<mach_vm_address_t>(index,regs,address,size);patcher.clearError();
++  bool ready=u==address+0x4F044 && !memcmp(reinterpret_cast<void *>(u),regsEntry,sizeof(regsEntry));
++  if(ready) {
++   KernelPatcher::RouteRequest route[] {{regs,wrapDisplay13RegsNeedUpdate,orgDisplay13RegsNeedUpdate}};
++   ready=patcher.routeMultiple(index,route,arrsize(route),address,size);patcher.clearError();
++  }
++  IORegistryEntry::getRegistryRoot()->setProperty("WEXEDPKeepReady",ready);
++ }
+  return display13FBSSTHooksReady;
+ }
+ 
+@@ -7639,6 +7865,25 @@ uint8_t *XE::display13SSTPort(void *port) {
+  return p;
+ }
+ 
++// At the firmware handoff a Combo eDP port still has native mode 0: Apple's setPortMode has not run yet, and
++// display13SSTPort requires exactly 1 (the AUX gate already accepts 0 or 1 on Combo ports). Admit that one case for the
++// handoff only: the same terms, on the DDI the VBT names as the panel. Every other caller keeps the exact check, and
++// Raptor Lake-U stays on the boot framebuffer until its display clock is implemented.
++uint8_t *XE::display13PanelBootPort(void *port) {
++ auto s=callbackXE;auto &c=display13FBPower;auto object=static_cast<OSObject *>(port);
++ if(!s->display13FramebufferRequested || s->xeProfile.display!=XELP::Display::XeLPD || XELP::raptorLakeUDevice(s->xeProfile.identity) ||
++    !s->display13FBSSTHooksReady ||
++    !object || object->getMetaClass()->getClassSize()<0x624 || !c.controller ||
++    c.controller!=s->adlnTopologyController || !adlnWriterMappingBound() ||
++    c.clockFaulted || c.memoryFaulted || c.panelFaulted || c.clockStopped || !s->adlnOutputWiring.described())return nullptr;
++ auto p=static_cast<uint8_t *>(port);auto config=Display13FBMemory::field<uint32_t *>(p,0x548);
++ if(!config || !Display13FBTopology::selected(s->adlnPlatform,config,s->adlnOutputWiring) ||
++    config[0]>=2 || !(s->adlnOutputWiring.panel&(1U<<config[0])) || p[0x117] ||
++    Display13FBMemory::field<uint32_t>(p,0x120)!=config[0] || Display13FBMemory::field<uint32_t>(p,0x550)!=0 ||
++    Display13FBMemory::field<void *>(p,0x578)!=c.access)return nullptr;
++ return p;
++}
++
+ bool XE::display13HDMIPort(void *port) {
+  auto s=callbackXE;auto object=static_cast<OSObject *>(port);
+  if(!object || object->getMetaClass()->getClassSize()<0x580)return false;
+@@ -7768,6 +8013,80 @@ uint32_t XE::wrapDisplay13TrainingPattern(void *path,uint32_t pattern) {
+  if(result || pattern>5)return result;
+  return program(false)?0:kIOReturnNotReady;
+ }
++
++// -wex-edp-keep (Display13EDPKeep): the donor asks for a complete mode set of
++// the boot panel path because its cached CRTCParams and current mode are the
++// boot placeholders, and that mode set stops the firmware's link and
++// retrains it. When the path is the one WhateverXe adopted at handoff, the
++// firmware's eDP SST source still runs (AlderLakeN::dpSource on a fresh
++// readout) and its pipe already has exactly the requested active image, lanes
++// and depth, report no register update: the donor's own same-mode branch then
++// updates only the plane and scaler (hwSetMode "Partial modeset"), leaves the
++// path attached (+3644 stays 2) and returns success. Anything else keeps the
++// donor's answer. The owner lock is held only for the register readout; the
++// DPCD status read runs after it.
++bool XE::wrapDisplay13RegsNeedUpdate(void *controller,void *fb,void *path,void *params,const void *timing,void *scaler) {
++ auto s=callbackXE;auto &c=display13FBPower;
++ const bool update=FunctionCast(wrapDisplay13RegsNeedUpdate,s->orgDisplay13RegsNeedUpdate)(controller,fb,path,params,timing,scaler);
++ if(!update || !display13EDPKeep() || !c.lock || !path || !params)return update;
++ namespace K=Display13EDPKeep;
++ Display13EDPKeepRecord record {};record.version=1;record.call=__sync_add_and_fetch(&display13EDPKeepCalls,1);
++ record.ddi=record.pipe=record.state=UINT32_MAX;
++ uint32_t reasons=0,lanes=0;void *port=nullptr;
++ IOLockLock(c.lock);
++ auto object=static_cast<OSObject *>(path);
++ if(object->getMetaClass()->getClassSize()>=0x3730) {
++  port=Display13FBMemory::field<void *>(path,0x3648);
++  record.pipe=Display13FBMemory::field<uint32_t>(path,0x3640);record.state=Display13FBMemory::field<uint32_t>(path,0x3644);
++ }
++ // The panel's Combo port can still have the native mode 0 of the handoff:
++ // setPortMode runs in the donor's complete mode set, which a kept link skips.
++ auto p=port ? display13SSTPort(port) : nullptr;
++ if(!p && port)p=display13PanelBootPort(port);
++ if(p)record.ddi=Display13FBMemory::field<uint32_t>(p,0x120);
++ if(!p || controller!=c.controller || record.ddi>=2 || !(s->adlnOutputWiring.panel&(1U<<record.ddi)) || record.pipe!=0)reasons|=K::NotPanel;
++ else {
++  record.portLanes=Display13FBMemory::field<uint32_t>(p,0x124);record.portRate=Display13FBMemory::field<uint32_t>(p,0x128);
++  if(!c.bootPanel || c.bridge.bootPort!=record.ddi || !c.bridge.bootAdopted ||
++     c.bridge.bootPath!=reinterpret_cast<uintptr_t>(path))reasons|=K::NotBoot;
++  Display13FBBootIO io{c.map};auto &live=c.displayScratch;AlderLakeN::readDisplay(io,true,live);
++  uint32_t values[arrsize(K::LiveRegisters)] {};bool read=live.status==AlderLakeN::ReadoutStatus::Complete;
++  for(unsigned i=0;read && i<arrsize(K::LiveRegisters);++i)read=AlderLakeN::value(live,K::LiveRegisters[i],values[i]);
++  for(unsigned i=0;i<arrsize(K::LiveRegisters);++i)record.live[i]=values[i];
++  if(!read)reasons|=K::Readout;
++  else {
++   if(!AlderLakeN::dpSource(live,0,record.ddi,nullptr,true))reasons|=K::NoSource;
++   K::Live l {};l.func=values[0];l.transconf=values[1];
++   for(unsigned i=0;i<6;++i)l.timing[i]=values[2+i];
++   l.source=values[8];lanes=((l.func>>1)&7)+1;
++   // The latest decision on this path kept the link: its scaler and source are the donor's own.
++   reasons|=K::compare(l,K::wanted(params),record.portLanes,display13EDPKeepPath==reinterpret_cast<uintptr_t>(path));
++  }
++  const auto w=K::wanted(params);record.wanted[0]=w.func;
++  for(unsigned i=0;i<6;++i)record.wanted[1+i]=w.timing[i];
++  record.wanted[7]=w.source;
++ }
++ IOLockUnlock(c.lock);
++ if(!(reasons&K::NotPanel)) {
++  uint8_t status[6] {};
++  const auto r=wrapDisplay13ReadAUX(port,0x202,status,sizeof(status));
++  if(r || !K::sinkTrained(status,lanes))reasons|=K::Sink;
++  memcpy(record.status,status,sizeof(status));
++ }
++ record.reasons=reasons;
++ const bool keep=!(reasons&K::Blocking);
++ if(keep)record.kept=__sync_add_and_fetch(&display13EDPKeepKept,1);
++ else record.kept=display13EDPKeepKept;
++ if(!(reasons&K::NotPanel))display13EDPKeepPath=keep ? reinterpret_cast<uintptr_t>(path) : 0;
++ auto root=IORegistryEntry::getRegistryRoot();
++ if(record.call==1)root->setProperty("WEXEDPKeepFirst",&record,sizeof(record));
++ root->setProperty("WEXEDPKeep",&record,sizeof(record));
++ if(keep && record.kept==1)
++  SYSLOG("igfx","eDP keep: firmware link kept on DDI %u, pipe A (sink status %02x %02x %02x)",record.ddi,record.status[0],record.status[1],record.status[2]);
++ else if(!keep && record.call==1)
++  SYSLOG("igfx","eDP keep: firmware link not kept (reasons 0x%x, state %u, sink status %02x %02x %02x)",reasons,record.state,record.status[0],record.status[1],record.status[2]);
++ return keep ? false : update;
++}
+ uint32_t XE::wrapDisplay13GMBus(IOService *controller,uint32_t bus,uint32_t speed,void *request) {
+     // Extending the donor's pin bound is not permission to use an arbitrary
+     // Type-C DDC bus. Only the retained controller's selected TMDS wiring
+@@ -8319,6 +8638,9 @@ uint32_t XE::wrapAlderLakeNPortDDC(OSObject *port,uint32_t block,uint8_t *data,b
+     uint64_t r[8] {1,block,force,0,0,config ? config[0] : 9};
+     auto root=IORegistryEntry::getRegistryRoot();if(selected)root->setProperty("N97FBPortDDCEntry",r,sizeof(r));
+     const auto result=FunctionCast(wrapAlderLakeNPortDDC,callbackXE->orgAlderLakeNPortDDC)(port,block,data,force);r[3]=result;
++    // -wex-edp-keep: the panel EDID's depth as the firmware runs it (8 bpc).
++    if(!result && block==1 && selected && config && config[0]<2 &&
++       (callbackXE->adlnOutputWiring.panel&(1U<<config[0])) && display13EDPKeepActive())Display13EDPKeep::edid8bpc(data);
+     cachePanelDepth(port,block,data,result);
+     if(selected) {
+         if(!result && data && (block==1 || block==2)) {
+@@ -8562,7 +8884,10 @@ void XE::wrapAlderLakeNSetupWorkLoop(IOService *controller,IOWorkLoop *workLoop)
+                 const auto ddi=c.bridge.bootPort;
+                 const bool dp=ddi<7 && (callbackXE->adlnOutputWiring.links()&(1U<<ddi));
+                 bool linked=!dp;
+-                if(dp && display13SSTPort(port)) {
++                const bool sst=dp && display13SSTPort(port);
++                const bool panelBoot=dp && !sst && display13PanelBootPort(port);
++                if(panelBoot)SYSLOG("igfx","Display13 eDP boot port on DDI %u admitted with native mode 0",ddi);
++                if(sst || panelBoot) {
+                     Display13FBBootIO io{c.map};auto &boot=c.displayScratch;AlderLakeN::readDisplay(io,true,boot);
+                     if(ddi>=3) {
+                         const auto source=Display13TC::Boot::capture(io,true,ddi,0);
+@@ -8909,6 +9234,7 @@ bool XE::adlnFreeStoppedPipe(IOService *fb) {
+                 // stays disabled through native free; native SW queue/FD4 and
+                 // GT callbacks remain intact for another pipe's old events.
+                 io.write(Display13FBIRQ::Master,0);irq.state.enabled=false;irq.quiescing=true;irq.blockedPipes|=1U<<pipe;held=true;
++                adlnIRQCache(controller,io); // native cached master must not re-arm DE in the scope
+                 const auto parked=Display13FBIRQ::parkStoppedPipe(io,irq.state,pipe,irq.handlers,irq.softwareHandlers,queued);
+                 record[9]=static_cast<uint32_t>(parked);ready=parked==Display13FBIRQ::Status::Complete;
+             }
+@@ -9134,8 +9460,21 @@ void XE::wrapAlderLakeNClockInit(IOService *controller) {
+ 	*reinterpret_cast<uint64_t *>(c+0xEA0)=r.nativeMaxHz();
+ }
+ uint64_t XE::wrapAlderLakeNClockProbe(IOService *controller) {return adlnClockReadout(controller).nativeHz();}
++// The dual path needs the controller gate, and another thread holds it at the panel's cold modeset: the change is refused,
++// clockFaulted latches, every SST hook answers NotReady and the panel stays off. Until a second framebuffer exists the
++// single-output path below, pipe A's FB mutex and no gate, is the matching one.
++bool XE::display13PanelOnlyClock() {
++	auto &c=display13FBPower;if(!c.lock)return false;
++	IOLockLock(c.lock);
++	const bool only=!XELP::raptorLakeUDevice(callbackXE->xeProfile.identity) &&
++		Display13FBTopology::panelOnlyClock(callbackXE->adlnOutputWiring,c.bridge.bootPort,c.pipe[0].memoryFramebuffer,c.pipe[1].memoryFramebuffer,c.pipe[2].memoryFramebuffer);
++	IOLockUnlock(c.lock);return only;
++}
+ void XE::wrapAlderLakeNClockSet(IOService *controller,uint64_t nativeHz) {
+-	if(Display13FBTopology::multiOutputWiring(callbackXE->adlnOutputWiring)) {adlnSetDualClock(controller,nativeHz);return;}
++	if(Display13FBTopology::multiOutputWiring(callbackXE->adlnOutputWiring)) {
++		if(!display13PanelOnlyClock()) {adlnSetDualClock(controller,nativeHz);return;}
++		SYSLOG("igfx","Display13 clock: %llu on the single-output path, only the panel has a framebuffer",nativeHz);
++	}
+ 	auto &c=display13FBPower;if(!c.lock)return;
+ 	Display13Clock::Change result;result.requestedHz=nativeHz;
+ 	auto fb=c.pipe[0].memoryFramebuffer;
+@@ -10928,7 +11267,8 @@ bool XE::adlnPowerReference(void *power,uint32_t operation,uint32_t domain) {
+ 					Display13FBIRQ::beginPowerRelease(irqIO,irq.state,releaseScope,released,affected,
+ 						irq.scopes.display,competingSoftware,queued,aux,hpd) : Display13FBIRQ::Status::Unavailable;
+ 				irqRelease[9]=static_cast<uint32_t>(status);releaseAllowed=status==Display13FBIRQ::Status::Complete;
+-				if(releaseScope.held) {irq.quiescing=true;irq.blockedPipes=affected;}
++				if(releaseScope.held) {irq.quiescing=true;irq.blockedPipes=affected;
++					adlnIRQCache(static_cast<IOService *>(c.controller),irqIO);} // master parked: drop native cache
+ 			} else {
+ 				releaseAllowed=!irq.quiescing && Display13FBIRQ::quiescentPipes(irqIO,irq.state,released,irq.handlers,affected);
+ 				if(releaseAllowed) {irq.quiescing=true;irq.blockedPipes=affected;}
+@@ -13591,6 +13931,93 @@ uint32_t XE::wrapDisplay13PanelPower(void *controller,uint32_t state) {
+  return ok?result:uint32_t(kIOReturnNotReady);
+ }
+ 
++// -wex-edp-blank (Display13EDPBlank), on top of -wex-edp-keep: the power callback
++// of the boot panel path whose latest mode-set decision kept the link does not
++// run the donor's Doze/Wake transition (it stops the link, runs a complete mode
++// set and leaves an OLED eDP 1.4 panel dark). It only clears/restores the
++// primary plane and cursor enables of pipe A and records the new power state
++// (+0x4284), as the DSI power path does. Any other framebuffer, or a path
++// whose link was not kept, takes the donor's own transition and never touches
++// pipe A; the blanked panel's own next Wake always brings it back (without a
++// register write when pipe A no longer scans it out or the display hardware is
++// down). Off (0), which the donor enters through prepareToEnterSleep and leaves
++// through prepareToExitSleep, is blanked the same way, so both are skipped too;
++// untested across a sleep that powers the display hardware off.
++// WEXEDPBlank (uint32_t[11], the panel's framebuffer only): version 2,
++// requested state, previous state, eligible, action (0 donor, 1 blank,
++// 2 unblank, 3 nothing to do), blanks, unblanks, plane and cursor control seen
++// when blanking, forgets (blank released without a register write), flags
++// (bit0 the framebuffer owns the blank, bit1 pipe A scans out the boot panel).
++// WEXEDPBlankReady: the flag, the keep decision hook and a native eDP panel.
++static bool display13EDPBlankRequested() {
++ static int v=-1;if(v<0)v=display13EDPKeep() && checkKernelArgument("-wex-edp-blank") ? 1 : 0;
++ return v==1;
++}
++static Display13EDPBlank::State display13EDPBlankState;
++bool XE::display13EDPBlankReady() {
++ auto s=callbackXE;auto &c=display13FBPower;
++ return display13EDPBlankRequested() && s && c.lock && c.map && s->orgDisplay13RegsNeedUpdate &&
++  s->adlnOutputWiring.panel && !s->adlnOutputWiring.dsi;
++}
++void XE::display13EDPBlankPublishReady() {
++ static bool published=false;
++ if(published || !display13EDPBlankRequested())return;
++ published=true;
++ IORegistryEntry::getRegistryRoot()->setProperty("WEXEDPBlankReady",display13EDPBlankReady());
++}
++bool XE::display13EDPBlankPower(IOService *fb,uint32_t state,uint32_t &result) {
++ namespace B=Display13EDPBlank;
++ display13EDPBlankPublishReady();
++ auto s=callbackXE;auto &c=display13FBPower;auto &b=display13EDPBlankState;
++ if(!display13EDPBlankRequested() || !s || !c.lock || !c.map || !fb || s->adlnOutputWiring.dsi)return false;
++ B::Action action=B::Action::Native;bool eligible=false,owner=false,panel=false,scanout=false,forgot=false;
++ uint32_t current=UINT32_MAX;
++ if(s->ownedDisplay13Framebuffer(fb)) {
++  IOLockLock(c.lock);
++  owner=b.blanked && b.fb==reinterpret_cast<uintptr_t>(fb);
++  const auto base=c.map->getVirtualAddress();
++  auto path=Display13FBMemory::singlePath<OSObject *>(fb);
++  if(base && c.map->getLength()==0x1000000 && path && path->getMetaClass()->getClassSize()>=0x3730) {
++   current=Display13FBMemory::field<uint32_t>(fb,0x4284);
++   // Pipe A still scans out the adopted boot panel and the display hardware
++   // is up; eligible: attached, and its latest mode-set decision kept the
++   // firmware's link.
++   panel=c.bridge.bootPath==reinterpret_cast<uintptr_t>(path);
++   scanout=panel && c.bootPanel && c.bridge.bootAdopted && !c.bridge.state.faulted && !c.bridge.state.suspended &&
++    Display13FBMemory::field<void *>(path,0x3648) && !Display13FBMemory::field<uint32_t>(path,0x3640);
++   eligible=scanout && Display13FBMemory::field<uint32_t>(path,0x3644)==2 &&
++    display13EDPKeepPath==reinterpret_cast<uintptr_t>(path);
++  }
++  action=B::decide(eligible,owner,current,state,b.blanked);
++  struct IO {
++   uintptr_t base;
++   uint32_t read(uint32_t o) {return *reinterpret_cast<volatile uint32_t *>(base+o);}
++   void write(uint32_t o,uint32_t v) {*reinterpret_cast<volatile uint32_t *>(base+o)=v;}
++  } io {base};
++  if(action==B::Action::Blank) {B::blank(io,b);b.fb=reinterpret_cast<uintptr_t>(fb);}
++  else if(action==B::Action::Unblank) {
++   if(scanout)B::unblank(io,b);
++   else {B::forget(b);forgot=true;}
++  }
++  if(eligible && action!=B::Action::Native)*reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(fb)+0x4284)=state;
++  IOLockUnlock(c.lock);
++ }
++ // Only the panel's own framebuffer is recorded: the others' callbacks would
++ // overwrite it at every wake.
++ if(panel || owner) {
++  const uint32_t record[11]={2,state,current,eligible,static_cast<uint32_t>(action),b.blanks,b.unblanks,b.plane,b.cursor,b.forgets,
++   (owner ? 1U : 0U)|(scanout ? 2U : 0U)};
++  IORegistryEntry::getRegistryRoot()->setProperty("WEXEDPBlank",const_cast<uint32_t *>(record),sizeof(record));
++  SYSLOG("igfx","eDP blank: power state %u -> %u (%s)",current,state,
++   action==B::Action::Blank ? "blanked" : action==B::Action::Unblank ? (forgot ? "released, panel not scanned out" : "unblanked") :
++   action==B::Action::Keep ? "unchanged" : "donor");
++ }
++ // Not ours (or no longer ours after an unblank): the donor's own transition.
++ if(!eligible || action==B::Action::Native)return false;
++ result=kIOReturnSuccess;
++ return true;
++}
++
+ // Shared exact-donor panel corrections; physical adapters own admission.
+ void XE::processNativePanel(KernelPatcher &patcher,size_t index,mach_vm_address_t address,size_t size) {
+ 			{
+@@ -14373,6 +14800,27 @@ bool XE::wrapTGLAcceleratorStart(IOService *that, IOService *provider) {
+   } else tglHost.owner=nullptr;
+  }
+  tglHost.startingOwner=nullptr;
++	if (result && checkKernelArgument("-wex-no-gva-scaler")) {
++		// Opt-in: the donor VA driver faults (null+8) in VideoToolbox pixel transfer
++		// (AVFPixelProcess_PrepareToTransferImages). Without the scaler key VideoToolbox
++		// scales on Metal or the CPU; HEVC decode and encode keys stay published.
++		that->removeProperty("IOGVAScaler");
++		SYSLOG("igfx", "TGL accelerator scaler key removed (-wex-no-gva-scaler)");
++	}
++	if (result && checkKernelArgument("-wex-no-gva")) {
++		// Opt-in diagnostic: unpublish every IOGVA* key so VideoToolbox decodes and
++		// converts on the CPU; IOVARendererID and the Metal device are unaffected.
++		if (auto props = that->dictionaryWithProperties()) {
++			if (auto keys = OSCollectionIterator::withCollection(props)) {
++				unsigned removed = 0;
++				while (auto key = OSDynamicCast(OSSymbol, keys->getNextObject()))
++					if (!strncmp(key->getCStringNoCopy(), "IOGVA", 5)) {that->removeProperty(key);removed++;}
++				SYSLOG("igfx", "TGL accelerator removed %u IOGVA keys (-wex-no-gva)", removed);
++				keys->release();
++			}
++			props->release();
++		}
++	}
+ 	tglObserveAccelerator(that, 2, true, result, reinterpret_cast<uintptr_t>(provider));
+ 	tglRecordStartOrder(6,that,9,0,0,result);
+ 	SYSLOG("igfx", "TGL accelerator start returned %d", result);
+@@ -17577,8 +18025,10 @@ void XE::wrapTGLModeTiming(void *controller,void *fb,void *timing) {
+  auto port=*reinterpret_cast<void **>(path+0x3648);
+  const auto ddi=tglPanelDepthPort(port);if(ddi>1)return;
+  IOSimpleLockLock(tglAUXLock);
+- const auto maximum=tglPanelDepthCache[ddi].port==port ? tglPanelDepthCache[ddi].maximum : 0;
++ auto maximum=tglPanelDepthCache[ddi].port==port ? tglPanelDepthCache[ddi].maximum : 0;
+  IOSimpleLockUnlock(tglAUXLock);
++ // -wex-edp-keep: the mode set requests the firmware's 8 bpc on the panel.
++ if(display13EDPKeepActive() && (callbackXE->adlnOutputWiring.panel&(1U<<ddi)) && (!maximum || maximum>8))maximum=8;
+  const auto encoding=*reinterpret_cast<uint16_t *>(t+0x88);
+  auto &depth=*reinterpret_cast<uint16_t *>(t+0x8A);
+  const auto before=depth;
+@@ -19502,12 +19952,14 @@ IOMemoryDescriptor *XE::wrapTGLAperture(void *fb, int aperture) {
+ 	return r;
+ }
+ 
++// Wake re-arm at the activation boundary (when this observation route is active).
+ void XE::wrapTGLEnablePipe(void *controller, void *fb, void *path, const void *timing) {
+ 	auto caller = __builtin_return_address(0);
+ 	tglObserveTiming(fb, path, timing, 1, 0);
+ 	tglObservePath(nullptr, path, 5, false, 0, 0, caller);
+ 	tglObserveScanout(fb, nullptr, 3, false, 0);
+ 	FunctionCast(wrapTGLEnablePipe, callbackXE->orgTGLEnablePipe)(controller, fb, path, timing);
++	display13FBRearmParked(static_cast<IOService *>(controller));
+ 	tglObservePath(nullptr, path, 5, true, 0, 0, caller);
+ 	tglObserveScanout(fb, nullptr, 3, true, 0);
+ }
+diff --git a/WhateverXe/kern_xe.hpp b/WhateverXe/kern_xe.hpp
+index 3db3ea4..6b05468 100644
+--- a/WhateverXe/kern_xe.hpp
++++ b/WhateverXe/kern_xe.hpp
+@@ -215,6 +215,7 @@ private:
+  static uint32_t wrapDisplay13I2CAUX(void *port,uint32_t command,uint32_t *packet,uint32_t length,uint8_t flag);
+  static uint32_t wrapDisplay13RunAUX(void *port,uint32_t command,uint32_t *packet,uint32_t length,bool flag);
+  mach_vm_address_t orgDisplay13TrainingPattern {},orgDisplay13SignalLevels {};
++ mach_vm_address_t orgDisplay13RegsNeedUpdate {};
+  mach_vm_address_t orgDisplay13EnablePort {},orgDisplay13DisablePort {};
+  static bool display13MainLinkAUX(void *port,bool acquire,bool stopping=false);
+  static uint32_t wrapDisplay13EnablePort(void *port);
+@@ -232,8 +233,11 @@ private:
+  static bool display13DeferClock(void *access,uint64_t reg,uint32_t value,uintptr_t caller);
+ 
+  static uint8_t *display13SSTPort(void *port);
++ static uint8_t *display13PanelBootPort(void *port);
++ static bool display13PanelOnlyClock();
+  static bool display13HDMIPort(void *port);
+  static uint32_t wrapDisplay13TrainingPattern(void *path,uint32_t pattern);
++ static bool wrapDisplay13RegsNeedUpdate(void *controller,void *fb,void *path,void *params,const void *timing,void *scaler);
+  static uint32_t wrapDisplay13SignalLevels(void *port,uint32_t swing,uint32_t emphasis,void *overrideConfig);
+ 	mach_vm_address_t xelpProviderProbe {},xelpProviderConfigureProbe {};
+  bool display13DPAltProbeReady {},display13DPProbeReady {},display13TCProbeReady {},display13TCDPProbeReady {},display13FBDPHooksReady {};
+@@ -498,6 +502,7 @@ private:
+ 	static void wrapAlderLakeNSetupWorkLoop(IOService *controller,IOWorkLoop *workLoop);
+ 	mach_vm_address_t orgDisplay13FBIRQ[5] {};
+ 	mach_vm_address_t orgDisplay13FBSWIRQ {};
++	mach_vm_address_t orgDisplay13FBIdleTimer {};
+ 	mach_vm_address_t adlnWorkLoopInGate {},adlnWorkLoopOnThread {};
+ 	mach_vm_address_t adlnWorkLoopTryClose {},adlnWorkLoopOpen {};
+ 	__attribute__((noinline)) bool processDisplay13FramebufferIRQ(KernelPatcher &patcher,size_t index,mach_vm_address_t address,size_t size);
+@@ -507,6 +512,10 @@ private:
+ 	static void wrapDisplay13FBProcessDE(IOService *controller,uint32_t *pipe,uint32_t *aux,uint32_t *hotplug);
+ 	static bool wrapDisplay13FBProcessIRQ(IOService *controller);
+ 	static void wrapDisplay13FBSWIRQ(IOService *controller,IOInterruptEventSource *source,int count);
++	static void wrapDisplay13FBIdleTimer(IOService *controller);
++	static bool display13FBRearmParked(IOService *controller);
++	static void display13FBRearmSchedule();
++	static void display13FBRearmTick(void *,void *);
+     void auditDSIBoot(IOPCIDevice *,volatile const uint8_t *,uint64_t,const AlderLakeN::DisplayReadout &,bool);
+ 	void adlnBootstrap(IOPCIDevice *pci);
+ 	uint16_t tglDeviceId {0}; // Physical PCI ID, not a DeviceProperties override.
+@@ -530,6 +539,12 @@ private:
+  static uint32_t display13PanelBrightness(void *controller,uint32_t brightness);
+  static void display13PanelPWMEnable(void *access);
+  static uint32_t wrapDisplay13PanelPower(void *controller,uint32_t state);
++ // -wex-edp-blank: display sleep of the kept panel link without the donor's power
++ // transition (kern_display13_edp_blank), run instead of the power callback.
++ static bool display13EDPBlankPower(IOService *fb,uint32_t state,uint32_t &result);
++ static bool display13EDPKeepActive();
++ static bool display13EDPBlankReady();
++ static void display13EDPBlankPublishReady();
+  static void resetPanelDepth();
+  static void cachePanelDepth(void *port,uint32_t block,const uint8_t *data,uint32_t result);
+  void processNativePanel(KernelPatcher &patcher,size_t index,mach_vm_address_t address,size_t size);
+diff --git a/WhateverXe/kern_xelp_devices.hpp b/WhateverXe/kern_xelp_devices.hpp
+index b696dc5..e8b62cf 100644
+--- a/WhateverXe/kern_xelp_devices.hpp
++++ b/WhateverXe/kern_xelp_devices.hpp
+@@ -92,6 +92,11 @@ inline bool mobileDisplay13Device(uint32_t pci) {
+     const auto e=deviceEntry(pci);
+     return e && e->backend==GT::ADLPMobile;
+ }
++// Recognized, but their dedicated display-clock handling is not implemented: docs/device-selection.md.
++inline bool raptorLakeUDevice(uint32_t pci) {
++    if((pci&0xFFFF)!=0x8086)return false;
++    const auto id=pci>>16;return id==0xA721 || id==0xA7A1 || id==0xA7A9 || id==0xA7AC || id==0xA7AD;
++}
+ inline bool desktopGTDevice(uint32_t pci) {
+     const auto e=deviceEntry(pci);
+     return e && (e->family==Family::AlderLakeS || e->family==Family::RaptorLakeS);
+diff --git a/tests/display13_aux.py b/tests/display13_aux.py
+index c64106d..5d0e5c7 100644
+--- a/tests/display13_aux.py
++++ b/tests/display13_aux.py
+@@ -10,14 +10,19 @@ functions='\n'.join(re.search(re.escape(sig)+r'.*?\n\}',s,re.S).group() for sig
+  'bool XE::display13AUXReady(', 'uint32_t XE::wrapDisplay13ReadAUX(', 'uint32_t XE::wrapDisplay13WriteAUX(',
+  'uint32_t XE::wrapDisplay13I2CAUX(', 'uint32_t XE::wrapDisplay13RunAUX('])
+ binding=re.search(r'static TGLFBBinding::Readout adlnInspectPathBinding\(.*?\n\}',s,re.S).group()
++# -wex-edp-keep switch and record (kern_xe.cpp) with their kernel imports stubbed.
++keep=s[s.index('// -wex-edp-keep: keep the firmware-trained panel link (kern_display13_edp_keep,'):s.index('uint32_t XE::wrapDisplay13ReadAUX(')]
++keep=(r/'tests/display13_edp_keep_stubs.hpp').read_text()+'\n'+keep
+ objects=(r/'tests/tgl_fb_binding.cpp').read_text().split('int main()')[0].replace('port[0x580]','port[0x700]')
+ base=(r/'tests/display13_sst_fixture.cpp').read_text().split('int main(')[0]
+-base=base.replace('// NATIVE_OBJECTS',objects).replace('// BINDING',binding).replace('// FUNCTIONS',functions)
++base=base.replace('// NATIVE_OBJECTS',objects).replace('// BINDING',binding).replace('// FUNCTIONS',keep+'\n'+functions)
+ base=base.replace('struct OSObject {','void *nativePortObject=nullptr;\nstruct OSObject {').replace('return size;','return this==nativePortObject?0x700:size;')
+ base=base.replace('bool adlnWriterMappingBound()', 'void adlnFault(bool &fault,unsigned){fault=true;}\nbool adlnWriterMappingBound()')
+ header=(r/'WhateverXe/kern_xe.hpp').read_text()
+ extra=header[header.index(' bool display13FBAUXHooksReady'):header.index(' mach_vm_address_t orgDisplay13TrainingPattern')]
+ extra=extra.replace(' bool processDisplay13FramebufferAUX(KernelPatcher &,size_t,mach_vm_address_t,size_t);','').replace('mach_vm_address_t','uintptr_t')
++# The keep decision hook counts as installed: these wrappers see what a matched donor build sees.
++extra+=' uintptr_t orgDisplay13RegsNeedUpdate {1};\n static bool display13EDPKeepActive();\n'
+ base=base.replace('struct XE {','struct XE {\n'+extra)
+ code=base+(r/'tests/display13_aux_fixture.cpp').read_text()
+ assert 'c.bridge.suspend(io)' in s
+diff --git a/tests/display13_cmtg_readout.cpp b/tests/display13_cmtg_readout.cpp
+new file mode 100644
+index 0000000..00754e1
+--- /dev/null
++++ b/tests/display13_cmtg_readout.cpp
+@@ -0,0 +1,34 @@
++#include "kern_alderlake_n.hpp"
++#include <map>
++#include <vector>
++#include <cassert>
++#include <cstdio>
++struct IO {
++ std::map<uint32_t,uint32_t> regs;std::vector<uint32_t>reads;unsigned deny=0,change=0;bool captured=false;
++ bool readable(uint32_t r){return r!=deny;}
++ uint32_t read(uint32_t r){reads.push_back(r);if(r==0x6fa88)captured=true;if(captured&&r==change)return regs[r]^1;return regs[r];}
++};
++static IO base(){IO x;x.regs={{0x45404,0x403},{0x60400,0x8a010102},{0x60404,8},{0x46140,0x10000000},{0x64000,0x80000002},{0x6fa88,0x80800000}};return x;}
++int main(){unsigned cases=0;
++ for(unsigned kind=0;kind<13;++kind){auto io=base();
++  if(kind==1)io.regs[0x45404]&=~(1U<<10);
++  if(kind==2)io.regs[0x60400]&=~(1U<<31);
++  if(kind==3)io.regs[0x60400]=0x92010002;
++  if(kind==4)io.regs[0x60404]=0;
++  if(kind==5)io.regs[0x60404]=0x18;
++  if(kind==6)io.regs[0x46140]=0;
++  if(kind==7)io.regs[0x64000]&=~(1U<<31);
++  if(kind==8)io.deny=0x6fa88;
++  if(kind>=9&&kind<=11)io.change=kind==9?0x60400:kind==10?0x46140:0x64000;
++  auto r=AlderLakeN::readDisplay(io,kind!=12);uint32_t v=0;
++  bool got=AlderLakeN::value(r,0x6fa88,v);
++  const bool expected=kind==0||(kind>=9&&kind<=11);
++  assert(got==expected);if(got)assert(v==0x80800000);
++  if(kind>=9&&kind<=11)assert(r.status==AlderLakeN::ReadoutStatus::PowerChanged);
++  if(kind==0)assert(r.status==AlderLakeN::ReadoutStatus::Complete);
++  unsigned cmtgReads=0;for(auto q:io.reads)if(q==0x6fa88)++cmtgReads;assert(cmtgReads==unsigned(expected));
++  assert(!AlderLakeN::dpSource(r,0,0,nullptr,true)); // diagnostic never weakens admission
++  ++cases;
++ }
++ printf("PASS CMTG diagnostic readout %u powered-source/admission/refusal/drift controls; no writes\n",cases);
++}
+diff --git a/tests/display13_cmtg_source.cpp b/tests/display13_cmtg_source.cpp
+new file mode 100644
+index 0000000..f828e36
+--- /dev/null
++++ b/tests/display13_cmtg_source.cpp
+@@ -0,0 +1,21 @@
++#define main existing_dp_test_main
++#include "display13_linear_dp.cpp"
++#undef main
++static IO secondary(){auto io=firmware(0,0,4,true);io.regs[0x60404]=8;io.regs[0x6fa88]=0x80800000;return io;}
++int main(){unsigned cases=0;
++ {auto io=secondary();auto boot=readDisplay(io,true);assert(dpSource(boot,0,0,nullptr,true));assert(!dpSource(boot,0,0,nullptr,false));
++  auto r=reinitializeLinear(io,boot,true,0,GOPProtocol::EDP);assert(r.status==LinearStatus::Success&&r.writes);
++  assert(io.regs[0x6fa88]==0x80800000&&io.regs[0x60404]==8);for(auto w:io.writes)assert(w.offset!=0x6fa88&&w.offset!=0x60404&&w.offset!=0x60400&&w.offset!=0x46140);++cases;}
++ for(unsigned bit=0;bit<32;++bit){auto io=secondary();io.regs[0x6fa88]^=1U<<bit;auto boot=readDisplay(io,true);assert(!dpSource(boot,0,0,nullptr,true));auto r=reinitializeLinear(io,boot,true,0,GOPProtocol::EDP);assert(r.status==LinearStatus::InvalidDPSource&&io.writes.empty());++cases;}
++ for(unsigned bit=0;bit<32;++bit){if(bit==3)continue;auto io=secondary();io.regs[0x60404]^=1U<<bit;auto r=reinitializeLinear(io,readDisplay(io,true),true,0,GOPProtocol::EDP);assert(r.status==LinearStatus::InvalidDPSource&&io.writes.empty());++cases;}
++ for(unsigned tick=1;tick<=6;++tick){auto io=secondary();auto boot=readDisplay(io,true);io.changeReg=0x6fa88;io.changeTick=tick;auto r=reinitializeLinear(io,boot,true,0,GOPProtocol::EDP);assert(r.status==LinearStatus::StateChanged&&!r.restored);for(auto w:io.writes)assert(w.offset!=0x6fa88&&w.offset!=0x60404);++cases;}
++ for(unsigned kind=0;kind<5;++kind){auto io=secondary();auto boot=readDisplay(io,true);
++  if(kind==0)for(unsigned i=0;i<boot.count;++i)if(boot.registers[i].offset==0x6fa88)boot.registers[i].offset=0;
++  if(kind==1)boot.activePipes=3;
++  if(kind==2)io.regs[0x6fa88]^=1;
++  if(kind==3)io.regs[0x46140]^=1;
++  if(kind==4)io.regs[0x60404]^=1;
++  assert(!dpSourceUnchanged(io,boot,0,0,0,nullptr,true));assert(io.writes.empty());++cases;
++ }
++ printf("PASS CMTG preservation %u source/control/route/drift cases; no CMTG/transcoder/clock writes\n",cases);
++}
+diff --git a/tests/display13_edp_blank.cpp b/tests/display13_edp_blank.cpp
+new file mode 100644
+index 0000000..61bd30e
+--- /dev/null
++++ b/tests/display13_edp_blank.cpp
+@@ -0,0 +1,79 @@
++#include "kern_display13_edp_blank.hpp"
++#include <assert.h>
++#include <map>
++#include <stdio.h>
++#include <vector>
++using namespace Display13EDPBlank;
++struct IO {
++    std::map<uint32_t,uint32_t> r;
++    std::vector<uint32_t> writes;
++    uint32_t read(uint32_t reg) {assert(r.count(reg));return r[reg];}
++    void write(uint32_t reg,uint32_t v) {assert(r.count(reg));r[reg]=v;writes.push_back(reg);}
++};
++static IO live() {
++    IO io;
++    io.r[PlaneCtl]=0x84001008U; io.r[PlaneSurf]=0x00200000U;
++    io.r[CurCtl]=0x04000027U; io.r[CurBase]=0x01230000U;
++    return io;
++}
++int main() {
++    // Decisions (eligible, owner, current, requested, blanked).
++    assert(decide(false,false,2,1,false)==Action::Native);
++    assert(decide(true,false,2,1,false)==Action::Blank);
++    assert(decide(true,false,2,0,false)==Action::Blank);
++    assert(decide(true,true,1,0,true)==Action::Keep);
++    assert(decide(true,true,1,2,true)==Action::Unblank);
++    assert(decide(true,true,0,2,true)==Action::Unblank);
++    assert(decide(true,false,2,2,false)==Action::Keep);
++    assert(decide(true,false,1,2,false)==Action::Native);      // native doze stays native
++    assert(decide(true,false,2,3,false)==Action::Native);      // unknown state
++    assert(decide(false,true,1,2,true)==Action::Unblank);      // the panel's own wake never leaves it dark
++    assert(decide(false,true,1,1,true)==Action::Native);
++    // Another framebuffer never touches the blanked panel, whatever it asks.
++    for(uint32_t current=0;current<=3;++current)
++        for(uint32_t requested=0;requested<=3;++requested) {
++            assert(decide(false,false,current,requested,true)==Action::Native);
++            assert(decide(true,false,current,requested,true)==Action::Native);
++        }
++
++    // Blank clears only the enables and latches each plane once.
++    auto io=live();State s;
++    blank(io,s);
++    assert(s.blanked && s.blanks==1);
++    assert(io.r[PlaneCtl]==0x04001008U && io.r[PlaneSurf]==0x00200000U);
++    assert(io.r[CurCtl]==0x04000000U && io.r[CurBase]==0x01230000U);
++    assert((io.writes==std::vector<uint32_t>{CurCtl,CurBase,PlaneCtl,PlaneSurf}));
++
++    // Unblank restores the enables, latching after each control write.
++    io.writes.clear();
++    unblank(io,s);
++    assert(!s.blanked && s.unblanks==1);
++    assert(io.r[PlaneCtl]==0x84001008U && io.r[CurCtl]==0x04000027U);
++    assert((io.writes==std::vector<uint32_t>{PlaneCtl,PlaneSurf,CurCtl,CurBase}));
++
++    // A donor reprogramming while dark is kept; only the enable comes back.
++    io=live();State t;blank(io,t);
++    io.r[PlaneCtl]=0x04003008U; io.r[PlaneSurf]=0x00400000U;
++    unblank(io,t);
++    assert(io.r[PlaneCtl]==0x84003008U && io.r[PlaneSurf]==0x00400000U);
++
++    // A cursor the donor already re-enabled is not rewritten.
++    io=live();State u;blank(io,u);
++    io.r[CurCtl]=0x04000022U;io.writes.clear();
++    unblank(io,u);
++    assert((io.writes==std::vector<uint32_t>{PlaneCtl,PlaneSurf}));
++    assert(io.r[CurCtl]==0x04000022U);
++
++    // Unblank and forget release the owner; forget writes nothing.
++    io=live();State w;blank(io,w);w.fb=0x1234;unblank(io,w);
++    assert(!w.blanked && !w.fb && w.unblanks==1 && !w.forgets);
++    blank(io,w);w.fb=0x1234;io.writes.clear();forget(w);
++    assert(!w.blanked && !w.fb && w.forgets==1 && w.unblanks==1 && io.writes.empty());
++    assert(io.r[PlaneCtl]==0x04001008U && io.r[CurCtl]==0x04000000U);
++
++    // A plane that was already off stays off.
++    io=live();io.r[PlaneCtl]=0x04001008U;State v;blank(io,v);unblank(io,v);
++    assert(io.r[PlaneCtl]==0x04001008U);
++    puts("display13_edp_blank: ok");
++    return 0;
++}
+diff --git a/tests/display13_edp_keep.cpp b/tests/display13_edp_keep.cpp
+new file mode 100644
+index 0000000..ad3544f
+--- /dev/null
++++ b/tests/display13_edp_keep.cpp
+@@ -0,0 +1,133 @@
++// -wex-edp-keep: the firmware eDP link is kept only when its pipe runs exactly
++// the active image the donor requests over the same link format, and the
++// IdeaPad firmware's measured eDP state is a valid AlderLakeN::dpSource. The
++// receiver caps and EDID views make the donor request that format.
++#include "kern_alderlake_n.hpp"
++#include "kern_display13_edp_keep.hpp"
++#include <map>
++#include <cassert>
++#include <cstdio>
++#include <cstring>
++#include <utility>
++#include <vector>
++using namespace AlderLakeN;
++struct IO {
++    std::map<uint32_t,uint32_t> regs;
++    bool readable(uint32_t reg) {return reg<0x1000000;}
++    uint32_t read(uint32_t reg) {return regs[reg];}
++    void write(uint32_t reg,uint32_t v) {regs[reg]=v;}
++};
++// AppleIntelFramebufferController::SetupTimings for one EDID detailed timing.
++struct Mode {uint32_t ha,hb,hso,hsw,va,vb,vso,vsw;};
++static void setupTimings(const Mode &t,uint32_t out[6]) {
++    const uint32_t htotal=t.ha+t.hb,hstart=t.ha+t.hso,hend=hstart+t.hsw,vtotal=t.va+t.vb;
++    out[0]=(((htotal-1)<<16)&0x3FFF0000U)|((t.ha-1)&0x3FFFU);
++    out[1]=out[0];
++    out[2]=(((hend-1)<<16)&0x3FFF0000U)|((hstart-1)&0x3FFFU);
++    out[3]=(((vtotal-1)<<16)&0x1FFF0000U)|((t.va-1)&0x1FFFU);
++    out[4]=out[3];
++    const uint32_t vstart=(0x1FFFU+t.va+t.vso),vend=vstart+t.vsw;
++    out[5]=((vend<<16)&0x1FFF0000U)|(vstart&0x1FFFU);
++}
++// Samsung ATNA40CT01 EDID DTD: 154.25 MHz, 1920+160 x 1200+36, sync 48/32, 8/8.
++static const Mode panel {1920,160,48,32,1200,36,8,8};
++static IO firmware() {
++    uint32_t t[6];setupTimings(panel,t);
++    IO io;
++    io.regs={{0x45404,0xFC0F},{0x45454,3},{0x45444,1},{0x42000,0x8E380000},
++        {0x60400,0x8A010102},{0x60540,0x80040300},{0x64000,0x80000002},{0x46140,0x10000000},
++        {0x60030,0x7E5D159E},{0x60034,0x800000},{0x60040,0x7C1CD},{0x60044,0x80000},
++        {0x60000,t[0]},{0x60004,t[1]},{0x60008,t[2]},{0x6000C,t[3]},{0x60010,t[4]},{0x60014,t[5]},
++        {0x6001C,0x077F04AF},{0x70008,0xC0000000}};
++    return io;
++}
++// The donor's CRTCParams for the same mode: +0x4 TRANS_DDI_FUNC_CTL (enable,
++// DDI A, SST, positive hsync, x2), timings, PIPESRC.
++static void params(uint8_t *p,const Mode &t,uint32_t lanes=2,uint32_t bpc=0) {
++    memset(p,0,0x100);uint32_t timing[6];setupTimings(t,timing);
++    const uint32_t func=0x8A010000U|(bpc<<20)|((lanes-1)<<1),source=((t.ha-1)<<16)|(t.va-1);
++    memcpy(p+0x4,&func,4);memcpy(p+0x10,timing,sizeof(timing));memcpy(p+0x28,&source,4);
++}
++int main() {
++    using namespace Display13EDPKeep;
++    // The timing words match the register values the EDID DTD gives.
++    {uint32_t t[6];setupTimings(panel,t);
++     assert(t[0]==0x081F077F && t[2]==0x07CF07AF && t[3]==0x04D304AF && t[5]==0x04BF04B7);}
++    auto io=firmware();auto boot=readDisplay(io,true);
++    assert(boot.status==ReadoutStatus::Complete && boot.activePipes==1);
++    assert(dpSource(boot,0,0,nullptr,true));
++    uint32_t values[sizeof(LiveRegisters)/sizeof(LiveRegisters[0])];
++    for(unsigned i=0;i<sizeof(values)/sizeof(values[0]);++i)assert(value(boot,LiveRegisters[i],values[i]));
++    const auto liveOf=[&](const uint32_t *v){Live l{};l.func=v[0];l.transconf=v[1];for(unsigned i=0;i<6;++i)l.timing[i]=v[2+i];l.source=v[8];return l;};
++    const auto l=liveOf(values);
++    uint8_t p[0x100];
++    // Same mode, link and depth: kept.
++    params(p,panel);assert(compare(l,wanted(p),2)==0);
++    // Another refresh of the same image only records the blanking difference.
++    {Mode t=panel;t.vb=60;params(p,t);const auto r=compare(l,wanted(p),2);assert(r==Blanking && !(r&Blocking));}
++    {Mode t=panel;t.hso=40;params(p,t);assert(compare(l,wanted(p),2)==Blanking);}
++    // A different active image is never kept.
++    {Mode t=panel;t.ha=1680;t.hb=400;params(p,t);assert(compare(l,wanted(p),2)&Timing);}
++    {Mode t=panel;t.va=1050;t.vb=186;params(p,t);assert(compare(l,wanted(p),2)&Timing);}
++    // A scaled mode of the native timing (1600x1200 source) from an unscaled
++    // pipe: the donor's scaler path reprograms the source, the link stays.
++    {params(p,panel);uint32_t source=0x063F04AF;memcpy(p+0x28,&source,4);
++     const auto r=compare(l,wanted(p),2);assert(r==Source && !(r&Blocking) && compare(l,wanted(p),2,true)==Source);}
++    // The firmware's 1024x768 GOP mode scaled to the panel (OpenCore Resolution
++    // below Max): the donor's cached scaler parameters do not describe it, so
++    // the first decision refuses it.
++    {params(p,panel);auto scaled=l;scaled.source=0x03FF02FF;assert(compare(scaled,wanted(p),2)==Timing);}
++    // Once a decision on the path was kept, a scaled source is the donor's own:
++    // back to native, or to another scaled mode, is again the scaler path.
++    {params(p,panel);auto scaled=l;scaled.source=0x063F03E7;assert(compare(scaled,wanted(p),2,true)==Source);
++     uint32_t source=0x068F0419;memcpy(p+0x28,&source,4);assert(compare(scaled,wanted(p),2,true)==Source);}
++    // A different active size stays a complete mode set, own or not.
++    {Mode t=panel;t.ha=1680;t.hb=400;params(p,t);assert(compare(l,wanted(p),2,true)&Timing);}
++    // Lane count or depth the donor wants differ from the live link (the rate
++    // is never compared: the same-mode branch does not touch the link).
++    params(p,panel);
++    assert(compare(l,wanted(p),1)==Format);
++    params(p,panel,1);assert(compare(l,wanted(p),2)==Format);
++    params(p,panel,2,1);assert(compare(l,wanted(p),2)==Format);
++    // The pipe must be enabled and running.
++    {params(p,panel);auto off=l;off.transconf=0x80000000;assert(compare(off,wanted(p),2)==PipeOff);}
++    // A stopped or retrained source is not the firmware link any more.
++    for(auto change:{std::make_pair(0x64000U,0x00000082U),std::make_pair(0x60540U,0x80040000U),
++                     std::make_pair(0x60400U,0x0A010102U),std::make_pair(0x46140U,0U)}) {
++        auto stopped=firmware();stopped.regs[change.first]=change.second;
++        auto r=readDisplay(stopped,true);assert(!dpSource(r,0,0,nullptr,true));
++    }
++    // Every blocking reason blocks; the sink status and blanking never do.
++    assert((Blocking&(NotPanel|NotBoot|Readout|NoSource|PipeOff|Timing|Format))==(NotPanel|NotBoot|Readout|NoSource|PipeOff|Timing|Format));
++    assert(!(Blocking&(Sink|Blanking)));
++    // DPCD lane status: CR, EQ and symbol lock on every active lane, aligned.
++    {const uint8_t ok[6]={0x77,0x00,0x01,0,0,0},lane1[6]={0x07,0x00,0x01,0,0,0},open[6]={0x77,0x00,0x00,0,0,0};
++     assert(sinkTrained(ok,2) && sinkTrained(lane1,1) && !sinkTrained(lane1,2) && !sinkTrained(open,2));
++     const uint8_t four[6]={0x77,0x77,0x81,0,0,0};assert(sinkTrained(four,4) && !sinkTrained(four,0) && !sinkTrained(nullptr,2));}
++    // Receiver caps as the IdeaPad's Samsung ATNA40CT01 reports them (DPCD
++    // 0x000.., SUPPORTED_LINK_RATES up to 5.4 Gbps, firmware LINK_BW_SET 0x14):
++    // capped at HBR in every view the donor reads, other bytes unchanged.
++    {uint8_t caps[16]={0x14,0x14,0xc2,0xc1,0,0,1,0xc0,2,0,0,0,0x3f,0x09,0x80,0};const auto before=std::vector<uint8_t>(caps,caps+16);
++     capLinkCaps(0,caps,16);assert(caps[1]==0x0A);for(unsigned i=0;i<16;++i)if(i!=1)assert(caps[i]==before[i]);
++     uint8_t ext[4]={0x14,0x14,0xc2,0xc1};capLinkCaps(0x2200,ext,4);assert(ext[1]==0x0A && ext[0]==0x14);
++     uint8_t rates[16]={0xa4,0x1f,0x30,0x2a,0x76,0x2f,0xbc,0x34,0x48,0x3f,0x60,0x54,0x78,0x69,0,0};
++     capLinkCaps(0x10,rates,16);
++     const uint8_t capped[16]={0xa4,0x1f,0x30,0x2a,0x76,0x2f,0xbc,0x34,0,0,0,0,0,0,0,0};assert(!memcmp(rates,capped,16));
++     uint8_t bw[2]={0x14,0x82};capLinkCaps(0x100,bw,2);assert(bw[0]==0x0A && bw[1]==0x82);
++     uint8_t hbr[2]={0x0A,0x82};capLinkCaps(0x100,hbr,2);assert(hbr[0]==0x0A);
++     // A read that only partly covers a field caps what it covers.
++     uint8_t low[1]={0x60};capLinkCaps(0x1A,low,1);assert(low[0]==0x60);
++     uint8_t pair[2]={0x60,0x54};capLinkCaps(0x1A,pair,2);assert(!pair[0] && !pair[1]);
++     capLinkCaps(0,nullptr,16);}
++    // EDID 1.4 DisplayPort 10 bpc -> 8 bpc with a valid checksum; 8 bpc, 6 bpc,
++    // analog or non-EDID data unchanged.
++    {uint8_t edid[128]={0,255,255,255,255,255,255,0};edid[18]=1;edid[19]=4;edid[20]=0xB5;
++     uint32_t sum=0;for(unsigned i=0;i<127;++i)sum+=edid[i];edid[127]=uint8_t(-sum);
++     assert(edid8bpc(edid) && edid[20]==0xA5);sum=0;for(unsigned i=0;i<128;++i)sum+=edid[i];assert(!(sum&255));
++     assert(!edid8bpc(edid) && edid[20]==0xA5);
++     edid[20]=0x95;assert(!edid8bpc(edid) && edid[20]==0x95);
++     edid[20]=0x35;assert(!edid8bpc(edid));
++     edid[19]=3;edid[20]=0xB5;assert(!edid8bpc(edid));edid[19]=4;
++     edid[0]=1;assert(!edid8bpc(edid));assert(!edid8bpc(nullptr));}
++    printf("PASS Display13 eDP keep: firmware link kept only for the same active image and link format\n");
++}
+diff --git a/tests/display13_edp_keep_route.py b/tests/display13_edp_keep_route.py
+new file mode 100644
+index 0000000..1be26ae
+--- /dev/null
++++ b/tests/display13_edp_keep_route.py
+@@ -0,0 +1,67 @@
++#!/usr/bin/env python3
++"""-wex-edp-keep through the production Display13 AUX wrappers and mode-set
++decision: the panel's receiver caps as the donor reads them, and the decision
++over a firmware-lit panel, with and without the switch. Optional exact donor
++replay of the hooked hwRegsNeedUpdate and its hwSetMode call site."""
++from pathlib import Path
++import re,subprocess,sys,tempfile
++r=Path(__file__).resolve().parents[1];s=(r/'WhateverXe/kern_xe.cpp').read_text()
++functions='\n'.join(re.search(re.escape(sig)+r'.*?\n\}',s,re.S).group() for sig in [
++ 'uint8_t *XE::display13SSTPort(', 'uint8_t *XE::display13PanelBootPort(', 'bool XE::display13HDMIPort(', 'bool XE::display13MainLinkAUX(',
++ 'uint32_t XE::wrapDisplay13EnablePort(', 'uint32_t XE::wrapDisplay13DisablePort(',
++ 'uint32_t XE::wrapDisplay13SignalLevels(', 'uint32_t XE::wrapDisplay13TrainingPattern(',
++ 'bool XE::display13AUXReady(', 'uint32_t XE::wrapDisplay13ReadAUX(', 'uint32_t XE::wrapDisplay13WriteAUX(',
++ 'bool XE::wrapDisplay13RegsNeedUpdate(',
++ 'bool XE::display13EDPBlankReady(', 'void XE::display13EDPBlankPublishReady(', 'bool XE::display13EDPBlankPower('])
++binding=re.search(r'static TGLFBBinding::Readout adlnInspectPathBinding\(.*?\n\}',s,re.S).group()
++keep=s[s.index('// -wex-edp-keep: keep the firmware-trained panel link (kern_display13_edp_keep,'):s.index('uint32_t XE::wrapDisplay13ReadAUX(')]
++blank=s[s.index('// -wex-edp-blank (Display13EDPBlank), on top of'):s.index('bool XE::display13EDPBlankReady(')]
++keep=(r/'tests/display13_edp_keep_stubs.hpp').read_text()+'\n'+keep+'\n'+blank
++objects=(r/'tests/tgl_fb_binding.cpp').read_text().split('int main()')[0].replace('port[0x580]','port[0x700]')
++base=(r/'tests/display13_sst_fixture.cpp').read_text().split('int main(')[0]
++# The real context's boot readout and panel flag, read through the same
++# unpowered-safe boot IO (absent registers read 0).
++bootio='''struct Display13FBBootIO {
++ Map *map;explicit Display13FBBootIO(Map *m):map(m){}
++ bool readable(uint32_t r) const {return r<0x1000000;}
++ uint32_t read(uint32_t r){auto i=map->regs.find(r);return i==map->regs.end()?0:i->second;}
++};
++'''
++base=base.replace(' uint32_t base=0,drop=0,delay=0,idleAfter=0,idleReg=0;',' uint32_t base=0,drop=0,delay=0,idleAfter=0,idleReg=0;\n uintptr_t getVirtualAddress();size_t length=0x1000000;size_t getLength() {return length;}',1)
++base=base.replace('// NATIVE_OBJECTS',objects).replace('// BINDING',binding).replace('// FUNCTIONS',bootio+keep+'\n'+functions)
++base=base.replace('bool adlnWriterMappingBound()','void adlnFault(bool &fault,unsigned){fault=true;}\nbool adlnWriterMappingBound()')
++assert base.count('constexpr unsigned kIOReturnNotReady=0xE00002D8;')==1
++base=base.replace('constexpr unsigned kIOReturnNotReady=0xE00002D8;','constexpr unsigned kIOReturnNotReady=0xE00002D8,kIOReturnSuccess=0;')
++base='#include "kern_alderlake_n.hpp"\n#include "kern_display13_edp_blank.hpp"\n#include <cstdio>\n'+base
++assert base.count(' Map *map=nullptr;')==1
++base=base.replace(' Map *map=nullptr;',' Map *map=nullptr;bool bootPanel=false;AlderLakeN::DisplayReadout displayScratch;')
++header=(r/'WhateverXe/kern_xe.hpp').read_text()
++extra=header[header.index(' bool display13FBAUXHooksReady'):header.index(' mach_vm_address_t orgDisplay13TrainingPattern')]
++extra=extra.replace(' bool processDisplay13FramebufferAUX(KernelPatcher &,size_t,mach_vm_address_t,size_t);','').replace('mach_vm_address_t','uintptr_t')
++assert ' mach_vm_address_t orgDisplay13RegsNeedUpdate {};' in header and ' static bool wrapDisplay13RegsNeedUpdate(void *controller,void *fb,void *path,void *params,const void *timing,void *scaler);' in header
++extra+=' static bool display13EDPBlankPower(IOService *,uint32_t,uint32_t &);static bool display13EDPBlankReady();static void display13EDPBlankPublishReady();static bool display13EDPKeepActive();\n'
++extra+=' bool fbOwned {true};bool ownedDisplay13Framebuffer(IOService *) const {return fbOwned;}\n'
++extra+=' uintptr_t orgDisplay13RegsNeedUpdate {};\n static bool wrapDisplay13RegsNeedUpdate(void *controller,void *fb,void *path,void *params,const void *timing,void *scaler);\n'
++base=base.replace('struct XE {','struct XE {\n'+extra)
++code=base+(r/'tests/display13_edp_keep_route_fixture.cpp').read_text()
++if len(sys.argv)>1:
++ b=Path(sys.argv[1]).read_bytes()
++ install=s[s.index('bool XE::processDisplay13FramebufferSST('):s.index('uint8_t *XE::display13SSTPort(')]
++ entry=bytes(int(x,0) for x in re.search(r'regsEntry\[\]=\{([^}]+)\}',install).group(1).split(','))
++ assert 'u==address+0x4F044' in install and b[0x4F044:0x4F044+len(entry)]==entry
++ # hwSetMode: call hwRegsNeedUpdate, test al, je to the same-mode branch, whose
++ # two "Partial modeset" paths and "Complete modeset" are the donor's strings.
++ call=b[0x4FCA1:0x4FCAA]
++ assert call[0]==0xE8 and 0x4FCA6+int.from_bytes(call[1:5],'little',signed=True)==0x4F044 and call[5:8]==bytes.fromhex('84c074')
++ for text in [b'Partial modeset by updating plane',b'Partial modeset by updating scaler',b'Complete modeset']:assert text in b
++ # Scaled modes: the same-mode branch's scaler path calls programPipeScaler,
++ # which writes PIPESRC (0x6001C + pipe) from the path's requested source (+0x150).
++ call=b[0x4FE1E:0x4FE23]
++ assert call[0]==0xE8 and 0x4FE23+int.from_bytes(call[1:5],'little',signed=True)==0x65FD4
++ assert b[0x66135:0x66143]==bytes.fromhex('418db61c000600418b9550010000')
++ print('PASS exact donor hwRegsNeedUpdate entry and hwSetMode same-mode branch, scaler path writes PIPESRC')
++with tempfile.TemporaryDirectory(prefix='display13-edp-keep-') as d:
++ p=Path(d);(p/'test.cpp').write_text(code)
++ subprocess.run(['clang++','-std=c++17','-O1','-g','-fsanitize=address,undefined','-I'+str(r/'WhateverXe'),str(p/'test.cpp'),'-o',str(p/'test')],check=True)
++ for args in [[],['-wex-edp-keep'],['-wex-edp-keep','-wex-edp-blank'],['-wex-edp-blank']]:
++  subprocess.run([str(p/'test')]+args,check=True)
+diff --git a/tests/display13_edp_keep_route_fixture.cpp b/tests/display13_edp_keep_route_fixture.cpp
+new file mode 100644
+index 0000000..4627e6a
+--- /dev/null
++++ b/tests/display13_edp_keep_route_fixture.cpp
+@@ -0,0 +1,320 @@
++// -wex-edp-keep through the production wrappers: the donor's receiver-caps
++// reads (wrapDisplay13ReadAUX) and its mode-set decision
++// (wrapDisplay13RegsNeedUpdate) over the panel path the IdeaPad Slim 5
++// 14IAH8's firmware lit, with the real boot readout, AUX bridge and owner
++// lock, mock MMIO and a sink with the panel's measured DPCD.
++struct Sink {uint8_t dpcd[0x2300] {};bool trained=false;unsigned statusReads=0;} sink;
++unsigned sinkRead(void *,uint32_t address,void *data,uint32_t length){
++ assert(!locked);auto b=static_cast<uint8_t *>(data);
++ if(address<=0x202 && address+length>0x202)++sink.statusReads;
++ uint8_t status[6] {};if(sink.trained){status[0]=0x77;status[2]=0x01;}
++ for(uint32_t i=0;i<length;++i){const auto a=address+i;b[i]=a>=0x202 && a<0x208 ? status[a-0x202] : sink.dpcd[a];}
++ return 0;
++}
++// Neither the caps view nor the decision writes to the sink.
++unsigned sinkWrite(void *,uint32_t,void *,uint32_t){assert(false);return 0;}
++// Samsung ATNA40CT01 (WEXEDPDPCD and the Linux i915 DPCD dump): receiver caps,
++// SUPPORTED_LINK_RATES up to 5.4 Gbps, eDP 1.4b, and the link settings the
++// firmware leaves: LINK_BW_SET 0x14 next to LINK_RATE_SET 3, two lanes with
++// enhanced framing.
++void sinkReset(){
++ sink=Sink{};const uint8_t caps[16]={0x14,0x14,0xc2,0xc1,0,0,1,0xc0,2,0,0,0,0x3f,0x09,0x80,0};
++ memcpy(sink.dpcd,caps,16);memcpy(sink.dpcd+0x2200,caps,16);
++ const uint8_t rates[16]={0xa4,0x1f,0x30,0x2a,0x76,0x2f,0xbc,0x34,0x48,0x3f,0x60,0x54,0x78,0x69,0,0};
++ memcpy(sink.dpcd+0x10,rates,16);sink.dpcd[0x700]=0x05;sink.dpcd[0x701]=0xfd;sink.dpcd[0x702]=0xff;sink.dpcd[0x703]=0x02;
++ sink.dpcd[0x100]=0x14;sink.dpcd[0x101]=0x82;sink.dpcd[0x115]=3;sink.dpcd[0x10A]=0x80;sink.dpcd[0x600]=1;
++}
++void edpSetup(Fixture &f,Map &map){
++ setup(f,map,0,0,2,10,true);auto &c=display13FBPower;state.display13FBAUXHooksReady=true;
++ state.display13AUXControllerSlot=reinterpret_cast<uintptr_t>(&c.controller);put(f.ctl,0xC30,c.lock);
++ for(unsigned n=0;n<6;++n)put(f.port,0x594+4*n,0x64010U+4*n);
++ state.orgDisplay13ReadAUX=reinterpret_cast<uintptr_t>(sinkRead);state.orgDisplay13WriteAUX=reinterpret_cast<uintptr_t>(sinkWrite);
++ f.port[0x11A]=1;f.port[0x118]=0;put(f.port,0x550,1U);
++ for(auto reg:{0x60544U,0x70008U,0x164280U,0x46010U,0x46014U,0x164284U,0x164288U,0x16428CU,0x164290U,0xC7200U,0xC7204U})map.regs[reg]=0;
++ map.regs[0x64000]=0x80;sinkReset();
++}
++// getDPCDInfo and the link setup read the receiver caps, the extended caps,
++// the rate table and the LINK_BW_SET they reuse. Under -wex-edp-keep every view
++// is capped at HBR; otherwise the panel's values pass unchanged.
++void capsScenarios(bool keep,bool hook=true){
++ Fixture f(0,0,0);Map map;edpSetup(f,map);
++ // The decision hook is installed (any non-null original); without it the caps stay native.
++ state.orgDisplay13RegsNeedUpdate=hook ? 1 : 0;keep=keep && hook;
++ uint8_t caps[16],ext[16],rates[16],bw[2];
++ assert(!XE::wrapDisplay13ReadAUX(f.port,0,caps,16) && !XE::wrapDisplay13ReadAUX(f.port,0x2200,ext,16));
++ assert(!XE::wrapDisplay13ReadAUX(f.port,0x10,rates,16) && !XE::wrapDisplay13ReadAUX(f.port,0x100,bw,2));
++ assert(caps[1]==(keep?0x0A:0x14) && ext[1]==(keep?0x0A:0x14) && bw[0]==(keep?0x0A:0x14) && bw[1]==0x82);
++ for(unsigned i=0;i<16;++i)if(i!=1)assert(caps[i]==sink.dpcd[i] && ext[i]==sink.dpcd[0x2200+i]);
++ for(unsigned i=0;i<16;++i)assert(rates[i]==(keep && i>=8 ? 0 : sink.dpcd[0x10+i]));
++ // Only the donor's view changes: the sink keeps its own values.
++ assert(sink.dpcd[0x1]==0x14 && sink.dpcd[0x100]==0x14);
++ assert(objectRefs.empty());
++}
++// The panel path the firmware lit: pipe A -> DDI A eDP SST x2, 8 bpc,
++// 1920x1200 from the panel's EDID DTD (154.25 MHz, 1920+160 x 1200+36, sync
++// 48/32, 8/8), and the donor's CRTCParams for the same mode.
++struct KeepMode {uint32_t ha,hb,hso,hsw,va,vb,vso,vsw;};
++const KeepMode keepPanel {1920,160,48,32,1200,36,8,8};
++void keepTimings(const KeepMode &t,uint32_t out[6]) {
++ const uint32_t htotal=t.ha+t.hb,hstart=t.ha+t.hso,hend=hstart+t.hsw,vtotal=t.va+t.vb;
++ out[0]=out[1]=(((htotal-1)<<16)&0x3FFF0000U)|((t.ha-1)&0x3FFFU);
++ out[2]=(((hend-1)<<16)&0x3FFF0000U)|((hstart-1)&0x3FFFU);
++ out[3]=out[4]=(((vtotal-1)<<16)&0x1FFF0000U)|((t.va-1)&0x1FFFU);
++ const uint32_t vstart=0x1FFFU+t.va+t.vso,vend=vstart+t.vsw;
++ out[5]=((vend<<16)&0x1FFF0000U)|(vstart&0x1FFFU);
++}
++void firmwareLink(Map &map,const KeepMode &m) {
++ uint32_t t[6];keepTimings(m,t);
++ map.regs[0x45404]|=0x400; // PW_A state
++ const std::pair<uint32_t,uint32_t> regs[]={{0x60400,0x8A010102},{0x60540,0x80040300},{0x64000,0x80000002},
++  {0x46140,0x10000000},{0x60030,0x7E5D159E},{0x60034,0x800000},{0x60040,0x7C1CD},{0x60044,0x80000},
++  {0x60000,t[0]},{0x60004,t[1]},{0x60008,t[2]},{0x6000C,t[3]},{0x60010,t[4]},{0x60014,t[5]},
++  {0x6001C,0x077F04AF},{0x70008,0xC0000000}};
++ for(const auto &r:regs)map.regs[r.first]=r.second;
++}
++void keepParams(uint8_t *p,const KeepMode &m,uint32_t lanes=2,uint32_t bpc=0) {
++ memset(p,0,0x100);uint32_t timing[6];keepTimings(m,timing);
++ const uint32_t func=0x8A010000U|(bpc<<20)|((lanes-1)<<1),source=((m.ha-1)<<16)|(m.va-1);
++ memcpy(p+0x4,&func,4);memcpy(p+0x10,timing,sizeof(timing));memcpy(p+0x28,&source,4);
++}
++unsigned regsCalls=0;bool regsResult=true;
++bool nativeRegs(void *,void *,void *,void *,const void *,void *){assert(!locked);++regsCalls;return regsResult;}
++struct KeepResult {bool update=true,recorded=false;uint32_t reasons=0,kept=0,call=0,portLanes=0,portRate=0;unsigned statusReads=0;size_t writes=0;};
++template<class Change> KeepResult keepCase(Change change) {
++ Fixture f(0,0,0);Map map;edpSetup(f,map);auto &c=display13FBPower;
++ state.orgDisplay13RegsNeedUpdate=reinterpret_cast<uintptr_t>(nativeRegs);regsResult=true;
++ firmwareLink(map,keepPanel);sink.trained=true;
++ // WhateverXe adopted this boot path from the firmware (N97FBBootHandoff).
++ c.bootPanel=true;c.bridge.bootPort=0;c.bridge.bootPath=reinterpret_cast<uintptr_t>(f.path);c.bridge.bootAdopted=true;
++ uint8_t params[0x100];keepParams(params,keepPanel);
++ // No earlier decision on this path unless the case says so (a new fixture
++ // may reuse the previous one's address).
++ display13EDPKeepPath=0;
++ change(f,map,params);
++ auto &data=IORegistryEntry::getRegistryRoot()->data;data.erase("WEXEDPKeep");
++ const size_t writes=map.writes.size();const unsigned reads=sink.statusReads,calls=regsCalls;
++ KeepResult r;r.update=XE::wrapDisplay13RegsNeedUpdate(f.ctl,f.fb,f.path,params,nullptr,nullptr);
++ assert(regsCalls==calls+1 && !locked);
++ r.writes=map.writes.size()-writes;r.statusReads=sink.statusReads-reads;
++ if(data.count("WEXEDPKeep")) {
++  const auto &v=data["WEXEDPKeep"];assert(v.size()==sizeof(Display13EDPKeepRecord));
++  Display13EDPKeepRecord record;memcpy(&record,v.data(),sizeof(record));
++  r.recorded=true;r.reasons=record.reasons;r.kept=record.kept;r.call=record.call;r.portLanes=record.portLanes;r.portRate=record.portRate;
++ }
++ assert(objectRefs.empty());
++ return r;
++}
++Display13EDPKeepRecord firstRecord() {
++ auto &data=IORegistryEntry::getRegistryRoot()->data;
++ assert(data.count("WEXEDPKeepFirst"));const auto &v=data["WEXEDPKeepFirst"];assert(v.size()==sizeof(Display13EDPKeepRecord));
++ Display13EDPKeepRecord record;memcpy(&record,v.data(),sizeof(record));return record;
++}
++void keepScenarios() {
++ namespace K=Display13EDPKeep;unsigned scenarios=0;
++ const auto none=[](Fixture &,Map &,uint8_t *){};
++ // 1. The firmware's link runs the requested mode: no complete mode set, no
++ //    register write, one DPCD status read outside the owner lock. The donor's
++ //    rate (HBR) and the firmware's LINK_BW_SET (0x14) differ, as on the
++ //    IdeaPad, and do not matter: the link is not touched.
++ {auto r=keepCase(none);assert(!r.update && r.recorded && !r.reasons && r.kept==1 && !r.writes && r.statusReads==1);
++  assert(r.call==1 && r.portLanes==2 && r.portRate==0x0A);
++  const auto f=firstRecord();assert(f.call==1 && f.kept==1 && !f.reasons && f.ddi==0 && !f.pipe);
++  assert(testSyslog().size()==1 && strstr(testSyslog()[0].c_str(),"firmware link kept"));++scenarios;}
++ // The panel's Combo port before setPortMode (native mode 0, the handoff's
++ // terms in display13PanelBootPort) is the same panel; any other mode is not.
++ {auto r=keepCase([](Fixture &f,Map &,uint8_t *){put(f.port,0x550,0U);});assert(!r.update && !r.reasons && r.kept==2);++scenarios;}
++ {auto r=keepCase([](Fixture &f,Map &,uint8_t *){put(f.port,0x550,2U);});assert(r.update && r.reasons==K::NotPanel && !r.statusReads);++scenarios;}
++ // 2. Recorded only: an untrained sink status, another refresh of the same image.
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *){sink.trained=false;});assert(!r.update && r.reasons==K::Sink && r.kept==3);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *p){KeepMode m=keepPanel;m.vb=60;keepParams(p,m);});
++  assert(!r.update && r.reasons==K::Blanking);++scenarios;}
++ // 3. Never kept: a stopped or retrained source, another image, a scaled GOP
++ //    mode, another lane count or depth, a path WhateverXe did not adopt, a
++ //    pipe that is off.
++ {auto r=keepCase([](Fixture &,Map &map,uint8_t *){map.regs[0x64000]=0x82;});assert(r.update && (r.reasons&K::NoSource) && !r.writes);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &map,uint8_t *){map.regs[0x60540]=0x80040000;});assert(r.update && (r.reasons&K::NoSource));++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *p){KeepMode m=keepPanel;m.ha=1680;m.hb=400;keepParams(p,m);});assert(r.update && (r.reasons&K::Timing));++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &map,uint8_t *){map.regs[0x6001C]=0x03FF02FF;});assert(r.update && r.reasons==K::Timing);++scenarios;}
++ // 6. A scaled mode of the native timing (WindowServer's 1600x1000 on the
++ //    1920x1200 panel): kept, the donor's scaler path programs scaler and
++ //    PIPESRC. After a kept decision the scaled source is the donor's own, so
++ //    back to native and on to another scaled mode are kept too; a path whose
++ //    latest decision was not kept still refuses a scaled source.
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *p){const uint32_t s=(1599U<<16)|999U;memcpy(p+0x28,&s,4);});
++  assert(!r.update && r.reasons==K::Source && !r.writes);++scenarios;}
++ {auto r=keepCase([](Fixture &f,Map &map,uint8_t *){map.regs[0x6001C]=(1599U<<16)|999U;display13EDPKeepPath=reinterpret_cast<uintptr_t>(f.path);});
++  assert(!r.update && r.reasons==K::Source);++scenarios;}
++ {auto r=keepCase([](Fixture &f,Map &map,uint8_t *p){map.regs[0x6001C]=(1599U<<16)|999U;display13EDPKeepPath=reinterpret_cast<uintptr_t>(f.path);
++   const uint32_t s=(1679U<<16)|1049U;memcpy(p+0x28,&s,4);});
++  assert(!r.update && r.reasons==K::Source);++scenarios;}
++ {auto r=keepCase([](Fixture &f,Map &map,uint8_t *){map.regs[0x6001C]=(1599U<<16)|999U;display13EDPKeepPath=reinterpret_cast<uintptr_t>(f.path)+8;});
++  assert(r.update && r.reasons==K::Timing);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *p){keepParams(p,keepPanel,1);});assert(r.update && r.reasons==K::Format);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *p){keepParams(p,keepPanel,2,1);});assert(r.update && r.reasons==K::Format);++scenarios;}
++ {auto r=keepCase([](Fixture &f,Map &,uint8_t *){put(f.port,0x124,1U);});assert(r.update && r.reasons==K::Format);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *){display13FBPower.bridge.bootPath=1;});assert(r.update && r.reasons==K::NotBoot);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *){display13FBPower.bootPanel=false;});assert(r.update && r.reasons==K::NotBoot);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *){display13FBPower.bridge.bootAdopted=false;});assert(r.update && r.reasons==K::NotBoot);++scenarios;}
++ {auto r=keepCase([](Fixture &,Map &map,uint8_t *){map.regs[0x70008]=0x80000000;});assert(r.update && (r.reasons&K::PipeOff));++scenarios;}
++ // 4. Not the panel's pipe A: no readout, no AUX.
++ {auto r=keepCase([](Fixture &f,Map &,uint8_t *){put(f.path,0x3640,1U);});assert(r.update && r.reasons==K::NotPanel && !r.statusReads);++scenarios;}
++ // 5. The donor already found nothing to update: untouched, unrecorded.
++ {auto r=keepCase([](Fixture &,Map &,uint8_t *){regsResult=false;});assert(!r.update && !r.recorded && !r.statusReads);++scenarios;}
++ // The first decision stays published next to the last one, and only the
++ // first kept link is logged.
++ {const auto f=firstRecord();assert(f.call==1 && !f.reasons);assert(testSyslog().size()==1);}
++ printf("PASS Display13 eDP keep: %u mode-set decisions over a firmware-lit panel through the production wrappers\n",scenarios);
++}
++// -wex-edp-blank through the production power hook (display13EDPBlankPower):
++// the kept boot panel path blanks and unblanks the primary plane and cursor of
++// pipe A in place of the donor's Doze/Wake transition, everything else takes
++// the donor's own. The mock MMIO window is real memory (the hook writes it
++// through the mapping's virtual address, as the kernel does).
++alignas(4096) uint8_t blankMMIO[0x1000000];
++uintptr_t Map::getVirtualAddress(){return reinterpret_cast<uintptr_t>(blankMMIO);}
++volatile uint32_t &mmio(uint32_t offset){return *reinterpret_cast<volatile uint32_t *>(blankMMIO+offset);}
++namespace B=Display13EDPBlank;
++const uint32_t livePlane=0x84001008U,liveCursor=0x04000027U;
++void blankLive(){mmio(B::PlaneCtl)=livePlane;mmio(B::PlaneSurf)=0x00200000U;mmio(B::CurCtl)=liveCursor;mmio(B::CurBase)=0x01230000U;}
++std::vector<uint32_t> blankRecord() {
++ auto &data=IORegistryEntry::getRegistryRoot()->data;assert(data.count("WEXEDPBlank"));
++ const auto &v=data["WEXEDPBlank"];assert(v.size()==11*sizeof(uint32_t));
++ std::vector<uint32_t> r(11);memcpy(r.data(),v.data(),v.size());assert(r[0]==2);return r;
++}
++uint32_t powerOf(Fixture &f){uint32_t v;memcpy(&v,f.fb+0x4284,sizeof(v));return v;}
++// The adopted boot panel path, awake, attached on pipe A, whose latest decision kept the link.
++void blankPrepare(Fixture &f,Map &map) {
++ edpSetup(f,map);auto &c=display13FBPower;
++ c.bootPanel=true;c.bridge.bootPort=0;c.bridge.bootPath=reinterpret_cast<uintptr_t>(f.path);c.bridge.bootAdopted=true;
++ f.attach();put(f.fb,0x4284,2U);state.fbOwned=true;state.adlnOutputWiring.dsi=0;
++ state.orgDisplay13RegsNeedUpdate=reinterpret_cast<uintptr_t>(nativeRegs);map.length=0x1000000;
++ c.bridge.state.faulted=c.bridge.state.suspended=false;
++ display13EDPKeepPath=reinterpret_cast<uintptr_t>(f.path);
++ display13EDPBlankState=Display13EDPBlank::State{};IORegistryEntry::getRegistryRoot()->data.erase("WEXEDPBlank");blankLive();
++}
++void blankScenarios() {
++ const bool requested=testKernelArguments().count("-wex-edp-blank")!=0;
++ unsigned scenarios=0;uint32_t result=0xFFFFFFFFU;
++ const auto power=[&](Fixture &f,uint32_t st){result=0xFFFFFFFFU;return XE::display13EDPBlankPower(reinterpret_cast<IOService *>(f.fb),st,result);};
++ {Fixture f(0,0,0);Map map;blankPrepare(f,map);
++  if(!requested) {
++   // Without the switch the donor's transition is untouched.
++   assert(!power(f,1) && result==0xFFFFFFFFU && powerOf(f)==2 && mmio(B::PlaneCtl)==livePlane && mmio(B::CurCtl)==liveCursor);
++   assert(!IORegistryEntry::getRegistryRoot()->data.count("WEXEDPBlank"));++scenarios;
++   printf("PASS Display13 eDP blank off: the donor's power transition unchanged (%u scenarios)\n",scenarios);return;
++  }
++  // Display sleep: Wake -> Doze only clears the enables and records the state.
++  assert(power(f,1) && result==kIOReturnSuccess && powerOf(f)==1);
++  assert(!(mmio(B::PlaneCtl)&B::PlaneEnable) && mmio(B::PlaneCtl)==(livePlane&~B::PlaneEnable));
++  assert(!(mmio(B::CurCtl)&B::CursorMode) && mmio(B::PlaneSurf)==0x00200000U && mmio(B::CurBase)==0x01230000U);
++  {const auto r=blankRecord();assert(r[1]==1 && r[2]==2 && r[3]==1 && r[4]==unsigned(B::Action::Blank) && r[5]==1 && r[6]==0 && r[7]==livePlane && r[8]==liveCursor && r[9]==0 && r[10]==2);}
++  assert(display13EDPBlankState.fb==reinterpret_cast<uintptr_t>(f.fb));
++  // Doze -> Off while dark changes nothing but the recorded state.
++  assert(power(f,0) && powerOf(f)==0 && display13EDPBlankState.blanks==1 && !(mmio(B::PlaneCtl)&B::PlaneEnable));
++  // Wake: the enables come back, no donor transition.
++  assert(power(f,2) && result==kIOReturnSuccess && powerOf(f)==2);
++  assert(mmio(B::PlaneCtl)==livePlane && mmio(B::CurCtl)==liveCursor && !display13EDPBlankState.blanked);
++  {const auto r=blankRecord();assert(r[1]==2 && r[2]==0 && r[4]==unsigned(B::Action::Unblank) && r[6]==1 && r[10]==3 && !display13EDPBlankState.fb);}
++  // Awake again: nothing to do, still not the donor's.
++  assert(power(f,2) && powerOf(f)==2 && display13EDPBlankState.blanks==1 && display13EDPBlankState.unblanks==1);
++  assert(blankRecord()[4]==unsigned(B::Action::Keep));
++  assert(!locked && objectRefs.empty());++scenarios;}
++ // A donor reprogramming of the plane while dark survives the wake.
++ {Fixture f(0,0,0);Map map;blankPrepare(f,map);
++  assert(power(f,1));mmio(B::PlaneCtl)=0x04003008U;mmio(B::PlaneSurf)=0x00400000U;
++  assert(power(f,2) && mmio(B::PlaneCtl)==0x84003008U && mmio(B::PlaneSurf)==0x00400000U);++scenarios;}
++ // Each missing condition keeps the donor's own transition and the hardware untouched.
++ const std::pair<const char *,void (*)(Fixture &)> refusals[]={
++  {"link not kept",[](Fixture &){display13EDPKeepPath=0;}},
++  {"another path",[](Fixture &f){display13EDPKeepPath=reinterpret_cast<uintptr_t>(f.path)+8;}},
++  {"path not adopted at the handoff",[](Fixture &){display13FBPower.bridge.bootAdopted=false;}},
++  {"not the boot path",[](Fixture &){display13FBPower.bridge.bootPath=1;}},
++  {"not the boot panel",[](Fixture &){display13FBPower.bootPanel=false;}},
++  {"pipe B",[](Fixture &f){put(f.path,0x3640,1U);}},
++  {"path detached",[](Fixture &f){put(f.path,0x3644,1U);}},
++  {"not an owned framebuffer",[](Fixture &){state.fbOwned=false;}},
++  {"bridge suspended",[](Fixture &){display13FBPower.bridge.state.suspended=true;}},
++  {"bridge faulted",[](Fixture &){display13FBPower.bridge.state.faulted=true;}},
++  {"DSI panel",[](Fixture &){state.adlnOutputWiring.dsi=1;}},
++  {"unknown power state",[](Fixture &f){put(f.fb,0x4284,7U);}},
++ };
++ for(const auto &refusal:refusals) {
++  Fixture f(0,0,0);Map map;blankPrepare(f,map);refusal.second(f);
++  const auto before=powerOf(f);
++  if(power(f,1)){printf("blanked despite: %s\n",refusal.first);assert(false);}
++  assert(powerOf(f)==before && mmio(B::PlaneCtl)==livePlane && mmio(B::CurCtl)==liveCursor && !display13EDPBlankState.blanked);
++  assert(!locked && objectRefs.empty());++scenarios;
++ }
++ // A native doze stays native, also when it wakes.
++ {Fixture f(0,0,0);Map map;blankPrepare(f,map);put(f.fb,0x4284,1U);
++  assert(!power(f,2) && powerOf(f)==1 && blankRecord()[4]==unsigned(B::Action::Native));++scenarios;}
++ // A blanked panel is never left dark: when its link is no longer the kept one
++ // the wake unblanks it and hands over to the donor.
++ {Fixture f(0,0,0);Map map;blankPrepare(f,map);
++  assert(power(f,1));display13EDPKeepPath=0;
++  assert(!power(f,2) && mmio(B::PlaneCtl)==livePlane && mmio(B::CurCtl)==liveCursor && !display13EDPBlankState.blanked);
++  assert(powerOf(f)==1 && blankRecord()[4]==unsigned(B::Action::Unblank));++scenarios;}
++ // Another framebuffer (an external display on pipe B, an offline connector
++ // without a path) never touches the blanked panel and never overwrites its
++ // record: in clamshell mode the external display wakes while the panel stays
++ // off. Only the panel's own wake brings it back.
++ {Fixture f(0,0,0);Map map;blankPrepare(f,map);
++  Fixture ext(1,1,1);ext.attach();put(ext.fb,0x4284,1U);
++  Fixture offline(2,2,2);put(offline.fb,0x4284,1U);
++  assert(power(f,1) && !(mmio(B::PlaneCtl)&B::PlaneEnable));
++  const auto record=blankRecord();
++  for(uint32_t st:{2U,1U,0U,2U}) {
++   assert(!power(ext,st) && result==0xFFFFFFFFU && !power(offline,st) && result==0xFFFFFFFFU);
++   assert(!(mmio(B::PlaneCtl)&B::PlaneEnable) && !(mmio(B::CurCtl)&B::CursorMode) && display13EDPBlankState.blanked);
++   assert(blankRecord()==record);
++  }
++  assert(power(f,2) && mmio(B::PlaneCtl)==livePlane && mmio(B::CurCtl)==liveCursor && !display13EDPBlankState.blanked);
++  // Awake, the others' callbacks still take the donor's path and leave pipe A alone.
++  assert(!power(ext,2) && !power(offline,2) && mmio(B::PlaneCtl)==livePlane);
++  assert(!locked && objectRefs.empty());++scenarios;}
++ // The panel's wake with the display hardware down (a real system sleep left
++ // the bridge suspended) or pipe A no longer on the boot panel releases the
++ // blank without writing a register, and hands over to the donor.
++ for(int variant=0;variant<3;++variant) {
++  Fixture f(0,0,0);Map map;blankPrepare(f,map);
++  assert(power(f,1));const auto dark=mmio(B::PlaneCtl);
++  if(variant==0)display13FBPower.bridge.state.suspended=true;
++  else if(variant==1)display13FBPower.bridge.state.faulted=true;
++  else put(f.path,0x3640,1U);
++  assert(!power(f,2) && mmio(B::PlaneCtl)==dark && !(dark&B::PlaneEnable) && !display13EDPBlankState.blanked);
++  assert(display13EDPBlankState.forgets==1 && display13EDPBlankState.unblanks==0 && powerOf(f)==1);
++  {const auto r=blankRecord();assert(r[4]==unsigned(B::Action::Unblank) && r[9]==1 && r[10]==1);}
++  assert(!locked && objectRefs.empty());++scenarios;
++ }
++ // The hardware window must be the whole 16 MB BAR0.
++ {Fixture f(0,0,0);Map map;blankPrepare(f,map);map.length=0x800000;
++  assert(!power(f,1) && powerOf(f)==2 && mmio(B::PlaneCtl)==livePlane && !display13EDPBlankState.blanked);++scenarios;}
++ // Ready needs the keep decision hook: without it no link is ever kept.
++ {Fixture f(0,0,0);Map map;blankPrepare(f,map);
++  assert(XE::display13EDPBlankReady());
++  state.orgDisplay13RegsNeedUpdate=0;assert(!XE::display13EDPBlankReady());
++  state.orgDisplay13RegsNeedUpdate=reinterpret_cast<uintptr_t>(nativeRegs);state.adlnOutputWiring.panel=0;assert(!XE::display13EDPBlankReady());
++  ++scenarios;}
++ printf("PASS Display13 eDP blank: plane/cursor blank and unblank in place of the donor's Doze/Wake, eligibility, never left dark, other framebuffers and powered-down hardware leave pipe A alone (%u scenarios)\n",scenarios);
++}
++// Without -wex-edp-keep the decision is the donor's, unrecorded.
++void offScenario() {
++ Fixture f(0,0,0);Map map;edpSetup(f,map);
++ state.orgDisplay13RegsNeedUpdate=reinterpret_cast<uintptr_t>(nativeRegs);regsResult=true;firmwareLink(map,keepPanel);sink.trained=true;
++ auto &c=display13FBPower;c.bootPanel=true;c.bridge.bootPort=0;c.bridge.bootPath=reinterpret_cast<uintptr_t>(f.path);c.bridge.bootAdopted=true;
++ uint8_t params[0x100];keepParams(params,keepPanel);const unsigned reads=sink.statusReads;
++ assert(XE::wrapDisplay13RegsNeedUpdate(f.ctl,f.fb,f.path,params,nullptr,nullptr) && sink.statusReads==reads);
++ assert(!IORegistryEntry::getRegistryRoot()->data.count("WEXEDPKeep") && testSyslog().empty());
++ {Fixture g(0,0,0);Map m;blankPrepare(g,m);uint32_t r=0xFFFFFFFFU;assert(!XE::display13EDPBlankPower(reinterpret_cast<IOService *>(g.fb),1,r) && mmio(B::PlaneCtl)==livePlane);
++  assert(!XE::display13EDPBlankReady());}
++ printf("PASS Display13 eDP keep off: the donor's caps and mode-set decision unchanged\n");
++}
++int main(int argc,char **argv){
++ for(int i=1;i<argc;++i)testKernelArguments().insert(argv[i]);
++ const bool keep=testKernelArguments().count("-wex-edp-keep")!=0;
++ capsScenarios(keep);
++ // A donor build the decision hook does not match keeps nothing: its caps stay native.
++ capsScenarios(keep,false);
++ if(keep){keepScenarios();blankScenarios();}else offScenario();
++ return 0;
++}
+diff --git a/tests/display13_edp_keep_stubs.hpp b/tests/display13_edp_keep_stubs.hpp
+new file mode 100644
+index 0000000..0983825
+--- /dev/null
++++ b/tests/display13_edp_keep_stubs.hpp
+@@ -0,0 +1,30 @@
++// Kernel imports of kern_xe.cpp's -wex-edp-keep code for the extracted
++// Display13 AUX/SST wrapper fixtures. Boot arguments are test-controlled and
++// registry properties keep their bytes.
++#ifndef DISPLAY13_EDP_KEEP_STUBS_HPP
++#define DISPLAY13_EDP_KEEP_STUBS_HPP
++#include <cstddef>
++#include <cstdint>
++#include <cstring>
++#include <map>
++#include <set>
++#include <string>
++#include <vector>
++#include "kern_display13_edp_keep.hpp"
++inline std::set<std::string> &testKernelArguments() {static std::set<std::string> a;return a;}
++inline bool checkKernelArgument(const char *name) {return testKernelArguments().count(name)!=0;}
++struct TestRegistryRoot {
++ unsigned published=0;
++ std::map<std::string,std::vector<uint8_t>> data;
++ template<class... T> bool setProperty(const char *,T...) {++published;return true;}
++ template<class P,class N> bool setProperty(const char *key,P *bytes,N length) {
++  ++published;auto b=reinterpret_cast<const uint8_t *>(bytes);data[key].assign(b,b+length);return true;
++ }
++};
++struct IORegistryEntry {static TestRegistryRoot *getRegistryRoot() {static TestRegistryRoot root;return &root;}};
++inline std::vector<std::string> &testSyslog() {static std::vector<std::string> l;return l;}
++#ifndef SYSLOG
++#define SYSLOG(module,fmt,...) testSyslog().push_back(fmt)
++#endif
++template<class T,size_t N> constexpr size_t arrsize(const T (&)[N]) {return N;}
++#endif
+diff --git a/tests/display13_fb_memory.cpp b/tests/display13_fb_memory.cpp
+index 6f87354..899833c 100644
+--- a/tests/display13_fb_memory.cpp
++++ b/tests/display13_fb_memory.cpp
+@@ -297,6 +297,11 @@ int main() {
+     assert(!apertureRange(qualified.pool,0,0,0x10000000));
+     assert(!apertureRange(qualified.pool,1,4096,0x10000000));
+     assert(!apertureRange(qualified.pool,0,0x3000001,0x10000000));
++    // Width x height x 4 of a scaled desktop, not whole pages: 2880x1620, 1440x900, and a page-rounded end inside the pool.
++    assert(apertureRange(qualified.pool,0,0x11CC400,0x10000000));
++    assert(apertureRange(qualified.pool,0,0x57E400,0x10000000));
++    assert(apertureRange(qualified.pool,0,0x2FFFC00,0x10000000));
++    assert(!apertureRange(qualified.pool,0x2FFF000,0x1001,0x10000000));
+     assert(!apertureRange(qualified.pool,0x3000000,4096,0x10000000));
+     assert(!apertureRange(qualified.pool,0,0x800000,0x400000));
+     Fixture accelerator;put(accelerator.controller,0xC0,uintptr_t(1));
+diff --git a/tests/display13_fb_topology.cpp b/tests/display13_fb_topology.cpp
+index 5674011..80497b1 100644
+--- a/tests/display13_fb_topology.cpp
++++ b/tests/display13_fb_topology.cpp
+@@ -172,6 +172,26 @@ int main() {
+      Platform in,out;memset(out.data(),0x5a,Bytes);auto saved=out;in.config(2)[2]=0;
+      assert(!apply(out.data(),Bytes,in.data(),w) && !memcmp(out.data(),saved.data(),Bytes));}
+     assert(singleOutputWiring(wiring));
++    {
++        // The single-output clock path is for a VBT eDP panel whose pipe is alone. Every other board stays on the dual path.
++        Display13OutputWiring panelTC;panelTC.valid=true;panelTC.panel=1;panelTC.dp=8;panelTC.typeC=8;
++        Display13OutputWiring panelHDMI;panelHDMI.valid=true;panelHDMI.panel=1;panelHDMI.hdmi=2;panelHDMI.ddc[1]=2;
++        Display13OutputWiring twoHDMI;twoHDMI.valid=true;twoHDMI.hdmi=3;twoHDMI.ddc[0]=1;twoHDMI.ddc[1]=2;
++        Display13OutputWiring hdmiTC;hdmiTC.valid=true;hdmiTC.hdmi=1;hdmiTC.ddc[0]=1;hdmiTC.dp=8;hdmiTC.typeC=8;
++        Display13OutputWiring dsiTC;dsiTC.valid=true;dsiTC.dsi=1;dsiTC.dp=8;dsiTC.typeC=8;
++        Display13OutputWiring panelOnly;panelOnly.valid=true;panelOnly.panel=1;
++        const Display13OutputWiring others[] {twoHDMI,hdmiTC,dsiTC,panelOnly};
++        assert(panelTC.described() && panelHDMI.described());
++        for(const auto &w:others)assert(w.described());
++        for(unsigned frames=0;frames<8;++frames) {
++            const bool a=frames&1,b=frames&2,c=frames&4;
++            assert(panelOnlyClock(panelTC,0,a,b,c)==(frames==1));
++            assert(panelOnlyClock(panelHDMI,0,a,b,c)==(frames==1));
++            assert(!panelOnlyClock(panelTC,3,a,b,c) && !panelOnlyClock(panelHDMI,1,a,b,c) && !panelOnlyClock(panelTC,UINT32_MAX,a,b,c));
++            for(const auto &w:others)for(uint32_t boot=0;boot<4;++boot)assert(!panelOnlyClock(w,boot,a,b,c));
++        }
++        assert(multiOutputWiring(twoHDMI) && multiOutputWiring(hdmiTC) && multiOutputWiring(dsiTC) && singleOutputWiring(panelOnly));
++    }
+     auto invalid=wiring;invalid.ddc[1]=4;assert(bootDDI(invalid,0x90030100)==UINT32_MAX);
+     puts("PASS AlderLakeN connector policy: stable identities/counts/pool, A/DDC1, B/DDC2 and A+B; measured single-GOP bootstrap, excluded connectors, malformed wiring and foreign config rejection. CPU only.");
+ }
+diff --git a/tests/display13_linear_dp.cpp b/tests/display13_linear_dp.cpp
+index 14a2afc..8f4d6b2 100644
+--- a/tests/display13_linear_dp.cpp
++++ b/tests/display13_linear_dp.cpp
+@@ -89,4 +89,5 @@ int main() {
+     r=reinitializeLinear(lost,readDisplay(lost,true),true,0,GOPProtocol::DP);
+     assert(r.status==LinearStatus::StateChanged && !r.restored && r.writes==12);
+     printf("PASS DP plane bootstrap: %u route/lane/framing/geometry cases, source/power drift and bounded rollback\n",cases);
++    return 0;
+ }
+diff --git a/tests/display13_power_dispatch.py b/tests/display13_power_dispatch.py
+index 07ddb8f..f4e79fc 100644
+--- a/tests/display13_power_dispatch.py
++++ b/tests/display13_power_dispatch.py
+@@ -58,6 +58,8 @@ struct XE {
+  bool quiesceDSIPath(IOService*,IOService*,OSObject*,bool=false){assert(false);return false;}
+  bool restoreDisplay13Ports(IOService*){assert(!held);return portsReady;}
+  static bool prepareDisplay13Wake(IOService*){return hardwareReady;}
++ // -wex-edp-blank (kern_xe.cpp): never taken here; covered by display13_edp_blank.
++ static bool display13EDPBlankPower(IOService*,uint32_t,uint32_t&){return false;}
+  static void recordDSIClient(IOService*,unsigned,uint32_t,uint32_t){}
+  bool ownedDisplay13Framebuffer(IOService*)const;
+  bool finishDisplay13SystemWake(IOService*,bool=false);
+diff --git a/tests/display13_sst.py b/tests/display13_sst.py
+index ac34a11..e9bdadb 100644
+--- a/tests/display13_sst.py
++++ b/tests/display13_sst.py
+@@ -4,7 +4,7 @@ from pathlib import Path
+ import hashlib,re,subprocess,sys,tempfile
+ r=Path(__file__).resolve().parents[1];s=(r/'WhateverXe/kern_xe.cpp').read_text()
+ functions='\n'.join(re.search(re.escape(sig)+r'.*?\n\}',s,re.S).group() for sig in [
+- 'uint8_t *XE::display13SSTPort(', 'bool XE::display13HDMIPort(', 'bool XE::display13MainLinkAUX(',
++ 'uint8_t *XE::display13SSTPort(', 'uint8_t *XE::display13PanelBootPort(', 'bool XE::display13PanelOnlyClock(', 'bool XE::display13HDMIPort(', 'bool XE::display13MainLinkAUX(',
+  'uint32_t XE::wrapDisplay13EnablePort(', 'uint32_t XE::wrapDisplay13DisablePort(',
+  'uint32_t XE::wrapDisplay13SignalLevels(', 'uint32_t XE::wrapDisplay13TrainingPattern('])
+ binding=re.search(r'static TGLFBBinding::Readout adlnInspectPathBinding\(.*?\n\}',s,re.S).group()
+diff --git a/tests/display13_sst_fixture.cpp b/tests/display13_sst_fixture.cpp
+index 3beb1ee..39fc293 100644
+--- a/tests/display13_sst_fixture.cpp
++++ b/tests/display13_sst_fixture.cpp
+@@ -35,6 +35,7 @@ struct Context {
+  Display13Power::NativeBridge bridge;void *lock=reinterpret_cast<void *>(1),*controller=nullptr,*access=nullptr;
+  Display13Power::MainLinkAUX mainLink[2];alignas(void *) uint8_t powerBytes[0x80]{};void *power=powerBytes;
+  Map *map=nullptr;bool panelFaulted=false,clockFaulted=false,memoryFaulted=false,clockStopped=false;
++ struct {void *memoryFramebuffer=nullptr;} pipe[3];
+ }display13FBPower;
+ struct Display13FBPowerIO {
+  Map *map;bool tcAuxSupported(){return true;}bool prepareTCAux(unsigned tc){return tc<4;}bool tcAuxHealthy(unsigned tc){return tc<4;}
+@@ -68,7 +69,7 @@ struct XE {
+  uintptr_t orgDisplay13EnablePort=0,orgDisplay13DisablePort=0;
+  static bool display13MainLinkAUX(void*,bool,bool=false);
+  static uint32_t wrapDisplay13EnablePort(void*);static uint32_t wrapDisplay13DisablePort(void*);
+- static uint8_t *display13SSTPort(void*);static bool display13HDMIPort(void*);
++ static uint8_t *display13SSTPort(void*);static uint8_t *display13PanelBootPort(void*);static bool display13PanelOnlyClock();static bool display13HDMIPort(void*);
+  static uint32_t wrapDisplay13TCSignal(void*,uint32_t,uint32_t,void*){assert(false);return 1;}
+  static uint32_t wrapDisplay13SignalLevels(void*,uint32_t,uint32_t,void*);
+  static uint32_t wrapDisplay13TrainingPattern(void*,uint32_t);
+@@ -186,6 +187,60 @@ int main(int argc,char **argv){
+   assert(!XE::wrapDisplay13EnablePort(f.port));assert(!XE::wrapDisplay13DisablePort(f.port));assert(objectRefs.empty());
+   display13FBPower.panelFaulted=true;assert(!XE::display13SSTPort(f.port));
+  }
++ // Firmware handoff: a Combo eDP port still in native mode 0 passes only as the VBT panel. Mode 1, Type-C modes, an
++ // external DP or HDMI route on the same DDI, and every other term of the exact check stay as they were.
++ unsigned panelBootCases=0;
++ for(unsigned ddi=0;ddi<2;++ddi) {
++  Fixture f(0,0,ddi);Map map;setup(f,map,ddi,0,4,20,true);
++  assert(XE::display13SSTPort(f.port)&&!XE::display13PanelBootPort(f.port));
++  put(f.port,0x550,0U);assert(!XE::display13SSTPort(f.port)&&XE::display13PanelBootPort(f.port)==f.port);++panelBootCases;
++  for(unsigned mode:{2U,3U,4U}){put(f.port,0x550,mode);assert(!XE::display13PanelBootPort(f.port));++panelBootCases;}
++  put(f.port,0x550,0U);assert(XE::display13PanelBootPort(f.port));
++  auto &c=display13FBPower;
++  for(bool *fault:{&c.clockFaulted,&c.memoryFaulted,&c.panelFaulted,&c.clockStopped}) {
++   *fault=true;assert(!XE::display13PanelBootPort(f.port));*fault=false;++panelBootCases;
++  }
++  f.port[0x117]=1;assert(!XE::display13PanelBootPort(f.port));f.port[0x117]=0;++panelBootCases;
++  put(f.port,0x120,1-ddi);assert(!XE::display13PanelBootPort(f.port));put(f.port,0x120,ddi);++panelBootCases;
++  put(f.port,0x578,static_cast<void *>(f.fb));assert(!XE::display13PanelBootPort(f.port));put(f.port,0x578,static_cast<void *>(f.access));++panelBootCases;
++  bound=false;assert(!XE::display13PanelBootPort(f.port));bound=true;++panelBootCases;
++  state.display13FBSSTHooksReady=false;assert(!XE::display13PanelBootPort(f.port));state.display13FBSSTHooksReady=true;++panelBootCases;
++  state.xeProfile.display=XELP::Display::XeD;assert(!XE::display13PanelBootPort(f.port));state.xeProfile.display=XELP::Display::XeLPD;++panelBootCases;
++  for(uint32_t id:{0xA7218086U,0xA7A18086U,0xA7A98086U,0xA7AC8086U,0xA7AD8086U}){state.xeProfile.identity=id;assert(!XE::display13PanelBootPort(f.port));++panelBootCases;}
++  for(uint32_t id:{0xA7208086U,0xA7A08086U,0xA7A88086U,0xA7AA8086U,0xA7AB8086U,0x46A68086U,0x46D08086U}){state.xeProfile.identity=id;assert(XE::display13PanelBootPort(f.port));++panelBootCases;}
++  state.xeProfile.identity=0;
++  // No other SST caller is loosened: with mode 0 they still refuse, once the native mode is set they run as before.
++  assert(XE::display13PanelBootPort(f.port));
++  assert(XE::wrapDisplay13EnablePort(f.port)==kIOReturnNotReady&&!linkCalls);
++  put(f.port,0x550,1U);assert(!XE::display13PanelBootPort(f.port)&&XE::display13SSTPort(f.port));
++  assert(!XE::wrapDisplay13EnablePort(f.port));assert(!XE::wrapDisplay13DisablePort(f.port));assert(objectRefs.empty());
++ }
++ for(unsigned ddi=0;ddi<2;++ddi) {
++  Fixture f(0,0,ddi);Map map;setup(f,map,ddi,0,4,20);
++  put(f.port,0x550,0U);assert(!XE::display13SSTPort(f.port)&&!XE::display13PanelBootPort(f.port));++panelBootCases;
++  assert(objectRefs.empty());
++ }
++ {
++  // A Type-C DP route is not a Combo handoff.
++  Fixture f(0,0,3);Map map;setup(f,map,3,0,4,20);
++  put(f.port,0x550,0U);assert(!XE::display13SSTPort(f.port)&&!XE::display13PanelBootPort(f.port));++panelBootCases;
++  assert(objectRefs.empty());
++ }
++ for(unsigned ddi=0;ddi<2;++ddi) {
++  // The clock path: a VBT panel next to another output, booted on the panel, its pipe alone. Raptor Lake-U stays out.
++  Fixture f(0,0,ddi);Map map;setup(f,map,ddi,0,4,20,true);auto &c=display13FBPower;
++  assert(!XE::display13PanelOnlyClock());++panelBootCases;
++  c.bridge.bootPort=ddi;c.pipe[0].memoryFramebuffer=f.fb;
++  for(uint32_t id:{0xA7A08086U,0xA7A88086U,0x46A68086U}){state.xeProfile.identity=id;assert(XE::display13PanelOnlyClock());++panelBootCases;}
++  for(uint32_t id:{0xA7218086U,0xA7A18086U,0xA7A98086U,0xA7AC8086U,0xA7AD8086U}){state.xeProfile.identity=id;assert(!XE::display13PanelOnlyClock());++panelBootCases;}
++  state.xeProfile.identity=0xA7A08086U;
++  c.pipe[1].memoryFramebuffer=f.fb;assert(!XE::display13PanelOnlyClock());c.pipe[1].memoryFramebuffer=nullptr;++panelBootCases;
++  c.bridge.bootPort=1-ddi;assert(!XE::display13PanelOnlyClock());c.bridge.bootPort=ddi;++panelBootCases;
++  assert(XE::display13PanelOnlyClock()&&!locked);
++  Fixture g(0,0,ddi);Map other;setup(g,other,ddi,0,4,20);display13FBPower.bridge.bootPort=ddi;display13FBPower.pipe[0].memoryFramebuffer=g.fb;
++  assert(!XE::display13PanelOnlyClock());++panelBootCases;
++ }
++ printf("PASS Display13 eDP boot handoff: %u mode 0 admission and clock path cases, only the VBT panel on Combo A/B\n",panelBootCases);
+  unsigned count=0,replays=0;
+  for(unsigned ddi=0;ddi<2;++ddi)for(unsigned pipe=0;pipe<3;++pipe)for(unsigned lanes:{1U,2U,4U})
+  for(unsigned rate:{6U,10U,20U,30U})for(unsigned swing=0;swing<4;++swing)for(unsigned emphasis=0;emphasis<4-swing;++emphasis){
+diff --git a/tests/dsi_aperture_adapter.py b/tests/dsi_aperture_adapter.py
+index aabf130..dd47d31 100644
+--- a/tests/dsi_aperture_adapter.py
++++ b/tests/dsi_aperture_adapter.py
+@@ -48,7 +48,7 @@ int main(){
+   put(&controller,0x1A28,uint64_t(0x80000000));put(&controller,0x1A30,0x800000U);put(&controller,0x1A34,0x800U);
+   put(&controller,0xC80,&parent);c.pipe[0].memory.pool=pool(&controller);
+   pending=problem!=0;target=true;
+-  switch(problem){case 2:put(&fb,0x4314,1U);break;case 3:put(&fb,0x4330,1U);break;
++  switch(problem){case 2:put(&fb,0x4314,0x800001U);break;case 3:put(&fb,0x4330,1U);break;
+    case 4:c.pipe[0].memory.pool.pages++;break;case 5:target=false;break;case 6:xe.dsiStopAttempted=true;break;}
+   assert(!xe.wrapAlderLakeNAperture(&fb,0) && !depth && parent.refs==1);
+   assert(c.memoryFaulted==(problem>=2));
+diff --git a/tests/dsi_update_dispatch.py b/tests/dsi_update_dispatch.py
+index f294039..a93b60d 100644
+--- a/tests/dsi_update_dispatch.py
++++ b/tests/dsi_update_dispatch.py
+@@ -82,6 +82,8 @@ struct XE {
+  static bool prepareDisplay13Wake(IOService*){return true;}
+  // Native common completion is covered by display13_power_dispatch.py.
+  bool ownedDisplay13Framebuffer(IOService*)const{return false;}
++ // -wex-edp-blank (kern_xe.cpp): a native eDP feature, never taken on the DSI path.
++ static bool display13EDPBlankPower(IOService*,uint32_t,uint32_t&){return false;}
+  struct {unsigned dsi=1;}adlnOutputWiring;bool dsiStopAttempted=false,dsiResourcesReady=true;
+  uintptr_t display13FramebufferEvent=0;bool dsiSystemWakeNotify=false,dsiPowerOffNotified=false;
+  uint32_t dsiWakeIncomplete=0;
+diff --git a/tests/fixtures/boot_argument_names.json b/tests/fixtures/boot_argument_names.json
+index f6a6c31..db43e1e 100644
+--- a/tests/fixtures/boot_argument_names.json
++++ b/tests/fixtures/boot_argument_names.json
+@@ -143,10 +143,15 @@
+     "-wxebeta"
+   ],
+   "-wex-noaccel": [],
++  "-wex-no-gva": [],
++  "-wex-no-gva-scaler": [],
+   "-wex-display-trace": [],
+   "-wex-adlp-readout": [],
+   "-wex-adlp-load-only": [],
+   "-wex-display13-offline": [],
++  "-wex-edp-keep": [],
++  "-wex-edp-blank": [],
+   "-wex-dsi-hdmi-test": [],
+-  "-wex-dsi-power-test": []
++  "-wex-dsi-power-test": [],
++  "-wex-no-edp-hpd": []
+ }
+diff --git a/tests/tgl_panel_depth_route.py b/tests/tgl_panel_depth_route.py
+index 4c5dcc1..3499f03 100644
+--- a/tests/tgl_panel_depth_route.py
++++ b/tests/tgl_panel_depth_route.py
+@@ -53,10 +53,12 @@ struct XE {
+  Ports firmwarePorts;mach_vm_address_t orgTGLModeTiming;
+  static uint32_t tglPanelDepthPort(void *);
+  static void wrapTGLModeTiming(void *,void *,void *);
++ static bool display13EDPKeepActive();
+ } state,*callbackXE=&state;
+ struct TGLPanelDepthCache {void *port;uint32_t maximum;};
+ TGLPanelDepthCache tglPanelDepthCache[2];
+ #define FunctionCast(f,p) reinterpret_cast<decltype(&f)>(p)
++bool keepArg=false,keepHook=true;bool XE::display13EDPKeepActive(){return keepArg && keepHook;}
+ PRODUCTION
+ void native(void *,void *,void *){++calls;}
+ template<class T> void put(uint8_t *p,unsigned off,T v){memcpy(p+off,&v,sizeof(v));}
+@@ -90,6 +92,18 @@ int main(){
+  XE::wrapTGLModeTiming(nullptr,fb,timing);assert(published==before+1 && *reinterpret_cast<uint16_t*>(timing+0x8A)==1);
+  state.adlsWiring.panel=0;put(timing,0x8A,uint16_t(2));before=published;
+  XE::wrapTGLModeTiming(nullptr,fb,timing);assert(published==before && *reinterpret_cast<uint16_t*>(timing+0x8A)==2);
++ // -wex-edp-keep: the panel's mode set requests the firmware's 8 bpc, only on the
++ // panel DDI; without the switch the EDID maximum stands.
++ state.adlsDisplaySelected=false;state.xeProfile.family=XELP::Family::TigerLake;put(port,0x548,static_cast<void *>(cfg));
++ cfg[0]=cfg[2]=0;tglPanelDepthCache[0]={port,10};
++ // A donor build the keep decision hook does not match (test 3) keeps nothing,
++ // so the EDID maximum stands there too.
++ for(unsigned test=0;test<4;++test){
++  keepArg=test!=0;keepHook=test!=3;state.adlnOutputWiring.panel=test==2?2:1;put(timing,0x8A,uint16_t(4));
++  XE::wrapTGLModeTiming(nullptr,fb,timing);
++  assert(*reinterpret_cast<uint16_t *>(timing+0x8A)==(test==1?2:4) && record[1]==(test==1?8U:10U));
++ }
++ keepArg=false;keepHook=true;
+  puts("PASS: production owner/port guards and unused-controller argument");
+ }
+ '''.replace('PRODUCTION',s[start:end])
+diff --git a/tools/test.py b/tools/test.py
+index 49b5c22..dd71daa 100644
+--- a/tools/test.py
++++ b/tools/test.py
+@@ -39,6 +39,7 @@ display13_training_frontend framebuffer_donor_runtime compat_bundle_version dsi_
+ dsi_restart dsi_panel dsi_command_adapter dsi_irq_live dsi_surface_adapter dsi_aperture_adapter
+ display13_shutdown display13_wake_notifications released_physical_admission released_topology
+ accelerator_resources display13_power_dispatch test_runner_contract
++display13_edp_keep_route
+ """.split()
+ FAMILIES = {'BigSur':'bigsur', 'Monterey':'monterey', 'Ventura':'ventura',
+             'Sonoma':'sonoma', 'Sequoia':'sequoia', 'Tahoe':'tahoe'}

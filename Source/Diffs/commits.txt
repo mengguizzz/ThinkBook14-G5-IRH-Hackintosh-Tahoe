@@ -1,0 +1,18 @@
+91fdb96 Merge remote-tracking branch 'origin/main' into xps9720-igpu
+c62e923 Display13 eDP: optionally keep the panel's HPD-A masked (-wex-no-edp-hpd)
+ec7f9e1 tests: stub the edp-blank power hook in the 0.8.1 native power dispatch test
+a3b5657 Display13 eDP: display sleep without a link teardown (-wex-edp-blank)
+2652cea Display13 eDP: keep the firmware-trained panel link (-wex-edp-keep)
+c69f926 Merge remote-tracking branch 'origin/main' into wex-9720-renedis-cmtg-081
+4a889e0 Preserve qualified firmware CMTG secondary on single internal eDP A
+11433e7 Capture firmware CMTG control only with an unchanged active eDP source
+4a0b18d wex: opt-in -wex-no-gva unpublishes every IOGVA* key (CPU video path diagnostic)
+d80deba wex: opt-in -wex-no-gva-scaler drops the IOGVAScaler key after accelerator start
+5ec4073 wex: re-arm a parked DE master once the pipes run again after wake
+25830bc wex: stop the native idle timer from re-arming a parked DE master
+3a1e665 wex: keep the native DE master cache coherent; underrun and storm guards
+34019ac wex: park the display IRQ master off while a single-output pipe is down
+bba15b8 wex: keep display interrupts on across a single-output display wake
+c3ceea9 wex: accept a framebuffer aperture that does not end on a page
+47c0835 wex: single-output CDCLK path while only the panel pipe has a framebuffer
+a57698f wex: admit the eDP boot port with port mode 0 at the firmware hand-off

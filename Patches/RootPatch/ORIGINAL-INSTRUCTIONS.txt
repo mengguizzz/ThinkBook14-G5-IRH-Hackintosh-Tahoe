@@ -1,0 +1,52 @@
+WEX 配套 OCLP：AX211 / Tahoe 音频本地适配候选
+
+这是源码运行工具，不是已经通过实机验证的新版 OCLP 安装包。
+基础为 b00t0x 3.0.0-rc.3+m.3 / c2892cbb0e0060654d90c248560e5631e4042bde。
+检测逻辑参考 laobamac/OCLP-Mod 3.1.9 与 JeoJay127/OCLP-X 3.0.0-rc.5。
+保留作者补丁定义、签名载荷、SIP/AMFI/文件保险箱校验、KDK 和快照流程。
+工具不构建 EFI；只选择 Modern Wireless / Modern Audio，不选择图形补丁。
+本地运行使用 sudo，不安装关闭签名校验的 debug 特权助手。
+
+准备：联网，保留可启动的 U 盘 EFI 和 Graphics 0.4.4 安装包。
+无需 Python 的初步采集：
+  bash /Volumes/WEXBUILD/WEX-RootPatch-AX211-Audio/collect.command
+这一步不改系统，将准确系统版本、驱动、设备和根补丁状态保存到 U 盘 logs。
+在 macOS 终端执行（先把整个工具文件夹拖到终端确定路径）：
+  bash /Volumes/WEXBUILD/WEX-RootPatch-AX211-Audio/prepare.command
+默认读取同一 U 盘 ../WEX-author-OCLP-3.0.0-rc.3+m.3/OpenCore-Patcher.pkg。
+如位置不同，在 prepare.command 后拖入那个 pkg；脚本校验精确 SHA256。
+需要 python.org 的 Python 3.11/3.12/3.13；脚本不使用 Apple 系统 Python。
+源码和资源解包到 /Users/Shared/WEX-RootPatch.随机字符，依赖装到独立 venv。
+
+先检测，不打补丁：
+  bash /Volumes/WEXBUILD/WEX-RootPatch-AX211-Audio/run.command inspect both
+先查看 logs 中 operation.log 与 baseline.txt。
+如果系统低于 Tahoe 26.7，会在 apply 阶段阻止继续：Graphics 0.4.4 的版本要求尚需解决。
+如果加载失败、物理 AX211 未发现或存在之前根补丁，也会停止，不强制跳过。
+
+执行候选补丁：
+先通过 diskutil list 找到实际用于启动的 EFI 分区，sudo diskutil mount diskXsY 挂载。
+不能只凭 /Volumes/EFI 名称认定它是当前使用的 EFI。
+第三个参数是该 EFI 内的 AMFIPass 二进制，脚本会核对 Mod 哈希。
+  bash /Volumes/WEXBUILD/WEX-RootPatch-AX211-Audio/run.command apply both /Volumes/EFI/EFI/OC/Kexts/AMFIPass.kext/Contents/MacOS/AMFIPass
+可以把 both 换成 audio 或 wifi，只测试一项。已有根补丁时不能直接叠第二项。
+执行前保存 /Library/Extensions、/Library/KernelCollections 和现有补丁元数据。
+备份保存在 Mac 本地 /Users/Shared/WEX-RootPatch.随机字符/backup-*，
+避免 ditto 在 exFAT 上复制内核缓存元数据失败；U 盘日志里的 backup-location.txt 记录位置。
+可能需要下载匹配系统的 KDK，需要有线网络。
+只有末尾出现 SUCCESS 才算工具报告完成；不自动重启。
+失败请保存完整日志，先不要重启或尝试其他补丁工具。
+
+回退（系统仍能启动时）：
+  bash /Volumes/WEXBUILD/WEX-RootPatch-AX211-Audio/run.command revert both
+这调用原作者 OCLP 的根卷回退，不是保证所有 GPU / AuxKC 状态自动恢复。
+回退后可能需要重新安装 Graphics 包。保留安装器、可启动 EFI 和恢复环境。
+若无法启动，先使用恢复环境处理根补丁/最后密封快照，不要继续更换图形驱动盲试。
+备份的 KC 只作保留证据，不能直接跨根卷快照复制回去作为通用修复。
+
+本地清理差异：首次打补丁要求没有既有 OCLP 根补丁元数据，且不运行原版
+按 2021 年时间戳迁移 /Library/Extensions 的启发式清理，以免移动正常图形驱动。
+回退使用原版清理逻辑，所以提前保留 Extensions，并明确不保证 GPU 自动保留。
+
+已验证：源码语法、脚本语法、检测范围与来源。尚未验证：macOS 依赖安装、
+作者 pkg 解包后的资源路径、实际 KDK/根卷/AuxKC 构建、重启后的音频/Wi-Fi/GPU。
