@@ -2,7 +2,7 @@
 
 由 [@mengguizzz](https://github.com/mengguizzz) 整理与实机验证。**免费分享，禁止将本项目的原创整理内容打包售卖、付费倒卖或冒充自己的适配成果。** 请保留署名及上游来源；第三方代码和驱动的权利仍以各自许可证为准，见 [分享声明](NOTICE.md)。
 
-适用基线：ThinkBook 14 G5+ IRH（Lenovo 21HW）、i5-13500H、Iris Xe `8086:A7A0`、AX211 `8086:51F1`。实测 macOS Tahoe 26.7.3 / 25G342，OpenCore 1.0.8。其他配置即使外观相同，也要重新核对 GPU、无线网卡、ACPI 和 USB 映射。
+适用基线：ThinkBook 14 G5+ IRH（Lenovo 21HW）、i5-13500H、Iris Xe `8086:A7A0`、AX211 `8086:51F1`。实测 macOS Tahoe 26.7.3 / 25G342，OpenCore 1.0.8。其他配置即使外观相同，也要重新核对 GPU、无线网卡、ACPI 和 USB 映射。EFI仅在**26.7.3**版本测试，其他版本请**自行测试**！！！！
 
 **使用前请仔细阅读快速开始！！！！EFI不是到手就用，还需要打补丁等操作！！！！！**：[跳转到快速开始](#快速开始)
 
