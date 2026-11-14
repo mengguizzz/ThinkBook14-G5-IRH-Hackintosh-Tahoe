@@ -17,7 +17,7 @@
 
 ## 无线/音频工具
 
-进入 `Patches/RootPatch`。使用 python.org 的 Python 3.11、3.12 或 3.13，不使用 Apple 系统 Python。自行取得作者 `3.0.0-rc.3+m.3` 的 OpenCore-Patcher.pkg；SHA256 固定为：
+进入 `Patches/RootPatch`。使用 python.org 的 **Python 3.11、3.12** 或 **3.13**，不使用 Apple 系统 Python。自行取得作者 `3.0.0-rc.3+m.3` 版本的 [OpenCore-Patcher.pkg](https://github.com/b00t0x/OpenCore-Legacy-Patcher/releases/tag/3.0.0-rc.3%2Bm.3)；SHA256 固定为：
 
 ```text
 754755b50f30fea3c41c366e5ae878016604c3c799dd1a82baa0a0cf3e18089f
