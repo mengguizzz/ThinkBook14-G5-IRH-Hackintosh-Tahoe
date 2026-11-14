@@ -4,6 +4,12 @@
 
 适用基线：ThinkBook 14 G5+ IRH（Lenovo 21HW）、i5-13500H、Iris Xe `8086:A7A0`、AX211 `8086:51F1`。实测 macOS Tahoe 26.7.3 / 25G342，OpenCore 1.0.8。其他配置即使外观相同，也要重新核对 GPU、无线网卡、ACPI 和 USB 映射。
 
+**使用前请仔细阅读快速开始！！！！EFI不是到手就用，还需要打补丁等操作！！！！！**：[跳转到快速开始](#快速开始)
+
+<img width="485" alt="IMG_20261114_220146" src="https://github.com/user-attachments/assets/434aba1d-30bd-49a6-84d3-7aab292a9786" />
+<img width="485" alt="IMG_20261114_220016" src="https://github.com/user-attachments/assets/05de19c4-72b4-4de0-9f01-8b7c75e35704" />
+
+
 ## 硬件和功能状态
 
 **✅ 已实测可用　◐ 可用但有问题或限制　☐ 未测试**。状态只代表本机反馈，不代表该功能所有模式均已验证。
@@ -43,7 +49,7 @@ Patches/RootPatch/           无线/音频根补丁脚本及 OCLP Python 源码
 Docs/                       编译、安装、补丁、来源与分发说明
 ```
 
-EFI 中只保留一份 `OC/config.plist`，历史测试配置和旧版 WhateverXe 备份没有打包。它是一份基于已验证配置的公开模板：**序列号、MLB、UUID、ROM 已清空或置零，使用前必须填入自己的信息。** 根补丁安装器、Apple 系统根补丁载荷、签名私钥和日志不在仓库内。
+EFI 中只保留一份 `OC/config.plist`，它是一份基于已验证配置的公开模板：**序列号、MLB、UUID、ROM 已清空或置零，使用前必须填入自己的信息。** 根补丁安装器、Apple 系统根补丁载荷、签名私钥和日志不在仓库内。
 
 ## 快速开始
 
@@ -55,13 +61,11 @@ EFI 中只保留一份 `OC/config.plist`，历史测试配置和旧版 WhateverX
 
 ## 为什么不用最初的 WhateverXe 发行包
 
-成功构建的实际来源为 [jkbuha/WhateverXe-contrib](https://github.com/jkbuha/WhateverXe-contrib) 的 `xps9720-igpu` 分支，基于 b00t0x/WhateverXe。以下“开发分支”指这个社区分支；感谢两者的开发工作。构建所用 Lilu 开发资源另存于 `Source/BuildDependencies`。
+成功构建的实际来源为 [jkbuha/WhateverXe-contrib](https://github.com/jkbuha/WhateverXe-contrib) 的 `xps9720-igpu` 分支，基于 [b00t0x/WhateverXe](https://github.com/b00t0x/WhateverXe)。以下“开发分支”指这个社区分支；感谢两者的开发工作。构建所用 Lilu 开发资源另存于 `Source/BuildDependencies`。
 
-本机最初使用作者发行包时没有启用加速，显示 19 MB 显存。后来替换为源码提交 `91fdb96fc08b931c8e90e1bccdda78acf392f1e1` 的编译产物后，加速正常。
+EFI最初使用原作者发行包时没有启用加速，显示 19 MB 显存。后来替换为源码提交 `91fdb96fc08b931c8e90e1bccdda78acf392f1e1` 的编译产物后，加速正常。
 
-**不是我们从零写了一个新 GPU 驱动。** 源码快照来自上述社区分支，导出时没有额外未提交的功能修改；相对官方 `0.8.2` 标签，它有真实的开发分支差异，包括 eDP 固件接管、显示中断、电源和 framebuffer 边界处理。详见 [源码差异与归属](Docs/WHATEVERXE-CHANGES.md)。没有隔离到单条“必需修复”，不保证这些改动全部与本机问题有关，也不建议盲加开发参数。
-
-我们实际整理的本机适配集中在：选定成功构建、匹配 Graphics / AMFIPass Mod、无线/音频补丁入口、PNLF、蓝牙名称与 NVRAM、CPU 显示名称，以及关闭导致 Windows 核显 TDR 的 DMAR 替换。
+源码快照来自上述社区分支，导出时没有额外未提交的功能修改；相对官方 `0.8.2` 标签，它有真实的开发分支差异，包括 eDP 固件接管、显示中断、电源和 framebuffer 边界处理。详见 [源码差异与归属](Docs/WHATEVERXE-CHANGES.md)。没有隔离到单条“必需修复”，不保证这些改动全部与本机问题有关，也不建议盲加开发参数。
 
 ## 来源、署名与禁止售卖
 
